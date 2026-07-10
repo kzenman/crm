@@ -6,7 +6,7 @@ from werkzeug.wrappers import Response
 
 from crm.integrations.api import get_contact_by_phone_number
 
-from .twilio_handler import IncomingCall, Twilio, TwilioCallDetails
+from .twilio_handler import IncomingCall, Twilio, TwilioCallDetails, get_twilio_number_owners
 
 
 def validate_twilio_request(args, require_application_sid: bool = False):
@@ -73,12 +73,36 @@ def voice(**kwargs):
 
 @frappe.whitelist(allow_guest=True)
 def twilio_incoming_call_handler(**kwargs):
+	from twilio.twiml.voice_response import VoiceResponse
+
 	args = frappe._dict(kwargs)
 	validate_twilio_request(args)
 
+	ai_enabled = frappe.db.get_single_value("Vmator AI Call Settings", "enabled")
+
+	if ai_enabled:
+		# For AI calls, assign the number owner as receiver without requiring an active session
+		call_details = TwilioCallDetails(args)
+		details = call_details.to_dict()
+		owners = get_twilio_number_owners(details.get("to", ""))
+		if owners:
+			details["receiver"] = list(owners.keys())[0]
+		call_log = frappe.get_doc({**details, "doctype": "CRM Call Log", "telephony_medium": "Twilio"})
+		link(details.get("from"), call_log)
+		call_log.save(ignore_permissions=True)
+		frappe.db.commit()
+
+		resp = VoiceResponse()
+		connect = resp.connect()
+		# frappe.local.site is already correctly resolved from this request's
+		# Host header by Frappe's own multi-tenant routing — use it instead of
+		# a hardcoded site so this works for every site with AI calling wired
+		# up, not just one.
+		connect.stream(url=f"wss://{frappe.local.site}/ai-stream")
+		return Response(resp.to_xml(), mimetype="text/xml")
+
 	call_details = TwilioCallDetails(args)
 	create_call_log(call_details)
-
 	resp = IncomingCall(args.From, args.To).process()
 	return Response(resp.to_xml(), mimetype="text/xml")
 
@@ -121,7 +145,12 @@ def update_call_log(call_sid, status=None):
 		call_details = twilio.get_call_info(call_sid)
 		call_log = frappe.get_doc("CRM Call Log", call_sid)
 		call_log.status = TwilioCallDetails.get_call_status(status or call_details.status)
-		call_log.duration = call_details.duration
+		# Only overwrite duration if Twilio's value exceeds what's already stored.
+		# Prevents early status callbacks (reporting 0-1s) from clobbering the AI
+		# agent's finalize_call_log() which runs moments later with the real duration.
+		twilio_duration = int(call_details.duration or 0)
+		if twilio_duration > int(call_log.duration or 0):
+			call_log.duration = twilio_duration
 		call_log.start_time = get_datetime_from_timestamp(call_details.start_time)
 		call_log.end_time = get_datetime_from_timestamp(call_details.end_time)
 		call_log.save(ignore_permissions=True)
@@ -143,8 +172,8 @@ def update_recording_info(**kwargs):
 
 	recording_url = args.RecordingUrl
 	call_sid = args.CallSid
-	call_log = update_call_log(call_sid)
-	if not call_log:
+
+	if not frappe.db.exists("CRM Call Log", call_sid):
 		frappe.throw(_("Call log not found"), frappe.DoesNotExistError)
 
 	try:
@@ -161,6 +190,13 @@ def update_call_status_info(**kwargs):
 	validate_twilio_request(args)
 
 	parent_call_sid = args.ParentCallSid
+
+	# AI inbound calls are finalized by the LiveKit agent (finalize_call_log).
+	# Skip Twilio's status/duration update — the agent writes the real values.
+	ai_enabled = frappe.db.get_single_value("Vmator AI Call Settings", "enabled")
+	if ai_enabled and frappe.db.exists("CRM Call Log", parent_call_sid):
+		return
+
 	call_log = update_call_log(parent_call_sid, status=args.CallStatus)
 	if not call_log:
 		frappe.throw(_("Call log not found"), frappe.DoesNotExistError)
