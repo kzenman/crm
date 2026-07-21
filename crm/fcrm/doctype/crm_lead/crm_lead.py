@@ -25,13 +25,10 @@ class CRMLead(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
 		from crm.fcrm.doctype.crm_products.crm_products import CRMProducts
-		from crm.fcrm.doctype.crm_rolling_response_time.crm_rolling_response_time import (
-			CRMRollingResponseTime,
-		)
+		from crm.fcrm.doctype.crm_rolling_response_time.crm_rolling_response_time import CRMRollingResponseTime
 		from crm.fcrm.doctype.crm_status_change_log.crm_status_change_log import CRMStatusChangeLog
+		from frappe.types import DF
 
 		annual_revenue: DF.Currency
 		communication_status: DF.Link | None
@@ -39,7 +36,7 @@ class CRMLead(Document):
 		email: DF.Data | None
 		facebook_form_id: DF.Data | None
 		facebook_lead_id: DF.Data | None
-		first_name: DF.Data
+		first_name: DF.Data | None
 		first_responded_on: DF.Datetime | None
 		first_response_time: DF.Duration | None
 		gender: DF.Link | None
@@ -68,7 +65,7 @@ class CRMLead(Document):
 		sla_creation: DF.Datetime | None
 		sla_status: DF.Literal["", "First Response Due", "Rolling Response Due", "Failed", "Fulfilled"]
 		source: DF.Link | None
-		status: DF.Link
+		status: DF.Link | None
 		status_change_log: DF.Table[CRMStatusChangeLog]
 		territory: DF.Link | None
 		total: DF.Currency
@@ -473,6 +470,10 @@ class CRMLead(Document):
 			"modified",
 			"_assign",
 			"image",
+			"vm_vehicle_cover_image",
+			"vm_vehicle_year",
+			"vm_vehicle_make",
+			"vm_vehicle_model",
 		]
 		return {"columns": columns, "rows": rows}
 

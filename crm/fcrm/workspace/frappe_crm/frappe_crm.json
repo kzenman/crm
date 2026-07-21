@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "Frappe CRM",
  "links": [],
- "modified": "2024-01-04 19:08:27.799960",
+ "modified": "2026-06-29 09:59:19.398188",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "Frappe CRM",
@@ -23,7 +23,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 1.0,
+ "sequence_id": 4.0,
  "shortcuts": [
   {
    "color": "Grey",

@@ -377,7 +377,7 @@ def get_data(
 				kanban_columns = frappe.get_all(
 					field_meta.options,
 					fields=["name"],
-					order_by="modified asc",
+					order_by="position asc, name asc",
 				)
 			elif field_meta.fieldtype == "Select":
 				kanban_columns = [{"name": option} for option in field_meta.options.split("\n")]
