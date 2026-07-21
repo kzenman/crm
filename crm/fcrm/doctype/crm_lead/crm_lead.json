@@ -89,8 +89,7 @@
   {
    "fieldname": "first_name",
    "fieldtype": "Data",
-   "label": "First Name",
-   "reqd": 1
+   "label": "First Name"
   },
   {
    "fieldname": "middle_name",
@@ -115,7 +114,6 @@
    "in_standard_filter": 1,
    "label": "Status",
    "options": "CRM Lead Status",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -425,8 +423,8 @@
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-04 12:33:17.177897",
- "modified_by": "Administrator",
+ "modified": "2026-06-05 19:37:01.351606",
+ "modified_by": "twoxim@gmail.com",
  "module": "FCRM",
  "name": "CRM Lead",
  "naming_rule": "By \"Naming Series\" field",
