@@ -515,14 +515,19 @@ const steps = reactive([
 onMounted(async () => {
   await users.promise
 
-  const filteredSteps = steps.filter((step) => {
-    if (step.condition) {
-      return step.condition()
-    }
-    return true
-  })
-
-  setUp(filteredSteps)
+  // Onboarding tour is disabled: the UI that consumed it (GettingStartedBanner,
+  // Help link, HelpModal) is commented out above, and several steps navigate to
+  // Deals/Contacts/Notes which are not in this sidebar. setUp() then resolves
+  // those steps to undefined and throws
+  // "Cannot set properties of undefined (setting 'completed')".
+  //
+  // const filteredSteps = steps.filter((step) => {
+  //   if (step.condition) {
+  //     return step.condition()
+  //   }
+  //   return true
+  // })
+  // setUp(filteredSteps)
 })
 
 // help center
