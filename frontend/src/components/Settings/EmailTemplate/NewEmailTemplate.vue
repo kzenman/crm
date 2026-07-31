@@ -56,7 +56,7 @@
               },
               {
                 label: __('Seed'),
-                value: 'CRM Seed',
+                value: 'CRM Lead',
               },
             ]"
             :placeholder="__('Deal')"

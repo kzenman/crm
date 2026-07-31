@@ -108,7 +108,7 @@ async function fetchLeadsForLoggedUser(curr_user) {
   if (!curr_user) return
 
   const result = await call('frappe.client.get_list', {
-    doctype: 'CRM Seed',
+    doctype: 'CRM Lead',
     filters: { lead_owner: curr_user.email },
     fields: ['name','modified','creation','status','source'],
     limit: 1000
@@ -227,7 +227,7 @@ onMounted(async () => {
       limit: 1
     });
 //      const seeds = await call('frappe.client.get_list', {
-//       doctype: 'CRM Seed',
+//       doctype: 'CRM Lead',
 // //       filters: { user_id: curr_user?.email || user },
 //       fields: ['lead_owner,status'],
 //       limit: 1

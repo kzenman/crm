@@ -58,7 +58,7 @@ const props = defineProps({
   },
   doctype: {
     type: String,
-    default: 'CRM Seed',
+    default: 'CRM Lead',
   },
   doc: {
     type: String,

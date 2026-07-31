@@ -111,12 +111,12 @@
    "fieldname": "seed",
    "fieldtype": "Link",
    "label": "Seed",
-   "options": "CRM Seed"
+   "options": "CRM Lead"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-18 06:09:02.037687",
+ "modified": "2026-07-31 07:30:50.949405",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Task",

@@ -50,7 +50,7 @@ function showTask(t) {
     due_date: '',
     priority: 'Low',
     status: 'Seed Gathering',
-    seed: (props.doctype === 'CRM Seed' && doc.value?.name) ? doc.value.name : '',
+    seed: (props.doctype === 'CRM Lead' && doc.value?.name) ? doc.value.name : '',
     repeat: 0,
     repeat_sel: '',
     completed: 0

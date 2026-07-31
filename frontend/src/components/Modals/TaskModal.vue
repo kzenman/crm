@@ -112,7 +112,7 @@
           <Link
             class="form-control flex-1 min-w-[200px]"
             v-model="_task.seed"
-            doctype="CRM Seed"
+            doctype="CRM Lead"
             :placeholder="__('Select Seed')"
           >
             <template #prefix>
@@ -195,7 +195,7 @@ const props = defineProps({
   },
   doctype: {
     type: String,
-    default: 'CRM Seed',
+    default: 'CRM Lead',
   },
   doc: {
     type: String,
@@ -392,7 +392,7 @@ function render() {
       // console.log('TaskModal render - using defaultTask')
       _task.value = { ...defaultTask }
       // Pre-fill seed with the current seed/lead/doc if available
-      if (props.doc && (props.doctype === 'CRM Seed' || props.doctype === 'CRM Lead')) {
+      if (props.doc && (props.doctype === 'CRM Lead' || props.doctype === 'CRM Lead')) {
         _task.value.seed = props.doc
       }
     }

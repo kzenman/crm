@@ -107,7 +107,7 @@ const props = defineProps({
   },
   doctype: {
     type: String,
-    default: 'CRM Seed',
+    default: 'CRM Lead',
   },
   editorProps: {
     type: Object,

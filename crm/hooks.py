@@ -159,7 +159,7 @@ doc_events = {
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext"
 		],
 	},
-	"CRM Seed": {
+	"CRM Lead": {
 		"validate": ["crm.utils.phone_formatting.format_doctype_phone_fields"],
 	},
 	"CRM Contacts": {

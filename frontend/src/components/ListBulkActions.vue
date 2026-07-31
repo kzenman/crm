@@ -190,7 +190,7 @@ function bulkActions(selections, unselectAll) {
     })
   }
 
-  if (props.doctype === 'CRM Seed') {
+  if (props.doctype === 'CRM Lead') {
     actions.push({
       label: __('Convert to Deal'),
       onClick: () => convertToDeal(selections, unselectAll),

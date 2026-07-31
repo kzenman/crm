@@ -13,7 +13,7 @@ from crm.fcrm.doctype.crm_call_log.crm_call_log import parse_call_log
 def get_activities(name):
 	if frappe.db.exists("CRM Deal", name):
 		return get_deal_activities(name)
-	elif frappe.db.exists("CRM Seed", name):
+	elif frappe.db.exists("CRM Lead", name):
 		return get_lead_activities(name)
 	else:
 		frappe.throw(_("Document not found"), frappe.DoesNotExistError)
@@ -47,7 +47,7 @@ def get_deal_activities(name):
 
 	if lead:
 		activities, calls, notes, tasks, attachments = get_lead_activities(lead)
-		creation_text = "converted the seed to this deal"
+		creation_text = "converted the lead to this deal"
 
 	activities.append(
 		{
@@ -165,9 +165,9 @@ def get_deal_activities(name):
 
 
 def get_lead_activities(name):
-	get_docinfo("", "CRM Seed", name)
+	get_docinfo("", "CRM Lead", name)
 	docinfo = frappe.response["docinfo"]
-	lead_meta = frappe.get_meta("CRM Seed")
+	lead_meta = frappe.get_meta("CRM Lead")
 	lead_fields = {
 		field.fieldname: {"label": field.label, "options": field.options} for field in lead_meta.fields
 	}
@@ -180,13 +180,13 @@ def get_lead_activities(name):
 		"first_responded_on",
 	]
 
-	doc = frappe.db.get_values("CRM Seed", name, ["creation", "owner"])[0]
+	doc = frappe.db.get_values("CRM Lead", name, ["creation", "owner"])[0]
 	activities = [
 		{
 			"activity_type": "creation",
 			"creation": doc[0],
 			"owner": doc[1],
-			"data": "created this seed",
+			"data": "created this lead",
 			"is_lead": True,
 		}
 	]
@@ -288,7 +288,7 @@ def get_lead_activities(name):
 	calls = get_linked_calls(name).get("calls", [])
 	notes = get_linked_notes(name) + get_linked_calls(name).get("notes", [])
 	tasks = get_linked_tasks(name) + get_linked_calls(name).get("tasks", [])
-	attachments = get_attachments("CRM Seed", name)
+	attachments = get_attachments("CRM Lead", name)
 
 	activities.sort(key=lambda x: x["creation"], reverse=True)
 	activities = handle_multiple_versions(activities)
@@ -458,8 +458,7 @@ def get_linked_notes(name):
 
 
 def get_linked_tasks(name):
-	# Get tasks linked via reference_docname
-	tasks_by_reference = frappe.db.get_all(
+	tasks = frappe.db.get_all(
 		"CRM Task",
 		filters={"reference_docname": name},
 		fields=[
@@ -470,39 +469,10 @@ def get_linked_tasks(name):
 			"due_date",
 			"priority",
 			"status",
-			"seed",
-			"completed",
 			"modified",
 		],
-	) or []
-	
-	# Get tasks linked via seed field
-	tasks_by_seed = frappe.db.get_all(
-		"CRM Task",
-		filters={"seed": name},
-		fields=[
-			"name",
-			"title",
-			"description",
-			"assigned_to",
-			"due_date",
-			"priority",
-			"status",
-			"seed",
-			"completed",
-			"modified",
-		],
-	) or []
-	
-	# Combine and deduplicate by task name
-	seen_tasks = set()
-	combined_tasks = []
-	for task in tasks_by_reference + tasks_by_seed:
-		if task.name not in seen_tasks:
-			seen_tasks.add(task.name)
-			combined_tasks.append(task)
-	
-	return combined_tasks
+	)
+	return tasks or []
 
 
 def parse_attachment_log(html, type):

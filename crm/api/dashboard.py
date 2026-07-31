@@ -75,7 +75,7 @@ def get_chart(name, type, from_date="", to_date="", user=""):
 
 def get_total_leads(from_date, to_date, user=""):
 	"""
-	Get seed count for the dashboard.
+	Get lead count for the dashboard.
 	"""
 	conds = ""
 
@@ -102,7 +102,7 @@ def get_total_leads(from_date, to_date, user=""):
                 THEN name
                 ELSE NULL
             END) as prev_month_leads
-		FROM `tabCRM Seed`
+		FROM `tabCRM Lead`
     """,
 		{
 			"from_date": from_date,
@@ -120,8 +120,8 @@ def get_total_leads(from_date, to_date, user=""):
 	)
 
 	return {
-		"title": _("Total seeds"),
-		"tooltip": _("Total number of seeds"),
+		"title": _("Total leads"),
+		"tooltip": _("Total number of leads"),
 		"value": current_month_leads,
 		"delta": delta_in_percentage,
 		"deltaSuffix": "%",
@@ -460,8 +460,8 @@ def get_average_time_to_close_a_lead(from_date, to_date, user=""):
 	delta_lead = current_avg_lead - prev_avg_lead if prev_avg_lead else 0
 
 	return {
-		"title": _("Avg. time to close a seed"),
-		"tooltip": _("Average time taken from seed creation to deal closure"),
+		"title": _("Avg. time to close a lead"),
+		"tooltip": _("Average time taken from lead creation to deal closure"),
 		"value": current_avg_lead,
 		"suffix": " days",
 		"delta": delta_lead,
@@ -596,7 +596,7 @@ def get_sales_trend(from_date="", to_date="", user=""):
 	return {
 		"data": sales_trend,
 		"title": _("Sales trend"),
-		"subtitle": _("Daily performance of seeds, deals, and wins"),
+		"subtitle": _("Daily performance of leads, deals, and wins"),
 		"xAxis": {
 			"title": _("Date"),
 			"key": "date",
@@ -685,7 +685,7 @@ def get_funnel_conversion(from_date="", to_date="", user=""):
 	"""
 	Get funnel conversion data for the dashboard.
 	[
-		{ stage: 'Seeds', count: 120 },
+		{ stage: 'Leads', count: 120 },
 		{ stage: 'Qualification', count: 100 },
 		{ stage: 'Negotiation', count: 80 },
 		{ stage: 'Ready to Close', count: 60 },
@@ -719,14 +719,14 @@ def get_funnel_conversion(from_date="", to_date="", user=""):
 	)
 	total_leads_count = total_leads[0].count if total_leads else 0
 
-	result.append({"stage": "Seeds", "count": total_leads_count})
+	result.append({"stage": "Leads", "count": total_leads_count})
 
 	result += get_deal_status_change_counts(from_date, to_date, deal_conds)
 
 	return {
 		"data": result or [],
 		"title": _("Funnel conversion"),
-		"subtitle": _("Seed to deal conversion pipeline"),
+		"subtitle": _("Lead to deal conversion pipeline"),
 		"xAxis": {
 			"title": _("Stage"),
 			"key": "stage",
@@ -898,7 +898,7 @@ def get_lost_deal_reasons(from_date="", to_date="", user=""):
 
 def get_leads_by_source(from_date="", to_date="", user=""):
 	"""
-	Get seed data by source for the dashboard.
+	Get lead data by source for the dashboard.
 	[
 		{ source: 'Website', count: 120 },
 		{ source: 'Referral', count: 45 },
@@ -931,8 +931,8 @@ def get_leads_by_source(from_date="", to_date="", user=""):
 
 	return {
 		"data": result or [],
-		"title": _("Seeds by source"),
-		"subtitle": _("Seeds generation channel analysis"),
+		"title": _("Leads by source"),
+		"subtitle": _("Lead generation channel analysis"),
 		"categoryColumn": "source",
 		"valueColumn": "count",
 	}

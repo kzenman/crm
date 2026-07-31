@@ -4,7 +4,7 @@ import frappe
 @frappe.whitelist()
 def get_first_lead():
 	lead = frappe.get_all(
-		"CRM Seed",
+		"CRM Lead",
 		filters={"converted": 0},
 		fields=["name"],
 		order_by="creation",

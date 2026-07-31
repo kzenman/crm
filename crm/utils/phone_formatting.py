@@ -71,7 +71,7 @@ def format_doctype_phone_fields(doc, method):
 	"""
 	# Define DocTypes and their phone fields
 	doctype_phone_fields = {
-		"CRM Seed": ["mobile_no", "phone"],
+		"CRM Lead": ["mobile_no", "phone"],
 		"CRM Deal": ["mobile_no", "phone"], 
 		"CRM Contacts": ["mobile_no", "phone"],
 		"CRM Telephony Agent": ["mobile_no"]

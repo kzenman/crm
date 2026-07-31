@@ -178,7 +178,7 @@ onMounted(async () => {
     });
     
      const seeds = await call('frappe.client.get_list', {
-      doctype: 'CRM Seed',
+      doctype: 'CRM Lead',
       fields:['lead_owner','status', 'modified'],
       //filters: [['modified', '>=', since90Str]],
       limit: 10000

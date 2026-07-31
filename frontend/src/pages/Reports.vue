@@ -495,7 +495,7 @@ watch(() => filters.level4, async (repEmployeeId) => {
     if (rep && rep.user_id) {
       try {
         const leads = await call('frappe.client.get_list', {
-          doctype: 'CRM Seed',
+          doctype: 'CRM Lead',
           filters: { lead_owner: rep.user_id }, // Use Sales Rep email as lead_owner
           fields: ['*'],
           limit: 1000

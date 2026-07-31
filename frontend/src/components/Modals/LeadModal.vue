@@ -74,7 +74,7 @@ const router = useRouter()
 const error = ref(null)
 const isLeadCreating = ref(false)
 
-const { document: lead, triggerOnBeforeCreate } = useDocument('CRM Seed')
+const { document: lead, triggerOnBeforeCreate } = useDocument('CRM Lead')
 
 const leadStatuses = computed(() => {
   let statuses = statusOptions('lead')
@@ -90,8 +90,8 @@ const leadStatuses = computed(() => {
 
 const tabs = createResource({
   url: 'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout',
-  cache: ['QuickEntry', 'CRM Seed'],
-  params: { doctype: 'CRM Seed', type: 'Quick Entry' },
+  cache: ['QuickEntry', 'CRM Lead'],
+  params: { doctype: 'CRM Lead', type: 'Quick Entry' },
   auto: true,
   transform: (_tabs) => {
     return _tabs.forEach((tab) => {
@@ -132,7 +132,7 @@ async function createNewLead() {
   createLead.submit(
     {
       doc: {
-        doctype: 'CRM Seed',
+        doctype: 'CRM Lead',
         ...lead.doc,
       },
     },
@@ -191,7 +191,7 @@ async function createNewLead() {
 
 function openQuickEntryModal() {
   showQuickEntryModal.value = true
-  quickEntryProps.value = { doctype: 'CRM Seed' }
+  quickEntryProps.value = { doctype: 'CRM Lead' }
   nextTick(() => (show.value = false))
 }
 

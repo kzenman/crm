@@ -103,7 +103,7 @@ const viewLinkedDoc = (doc) => {
   let page = ''
   let id = ''
   switch (doc.reference_doctype) {
-    case 'CRM Seed':
+    case 'CRM Lead':
       page = 'leads'
       id = doc.reference_docname
       break

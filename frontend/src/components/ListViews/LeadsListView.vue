@@ -40,7 +40,7 @@
     <ListRows
       :rows="orderedRows"
       v-slot="{ idx, column, item, row }"
-      doctype="CRM Seed"
+      doctype="CRM Lead"
     >
       <div v-if="column.key === '_assign'" class="flex items-center">
         <MultipleAvatar
@@ -197,7 +197,7 @@
     }"
     @loadMore="emit('loadMore')"
   />
-  <ListBulkActions ref="listBulkActionsRef" v-model="list" doctype="CRM Seed" />
+  <ListBulkActions ref="listBulkActionsRef" v-model="list" doctype="CRM Lead" />
 </template>
 
 <script setup>

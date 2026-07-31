@@ -16,7 +16,7 @@
         v-if="document.actions?.length"
         :actions="document.actions"
       />
-      <AssignTo v-model="assignees.data" doctype="CRM Seed" :docname="leadId" />
+      <AssignTo v-model="assignees.data" doctype="CRM Lead" :docname="leadId" />
       <Dropdown
         v-if="doc"
         :options="
@@ -53,7 +53,7 @@
       <template #tab-panel>
         <Activities
           ref="activities"
-          doctype="CRM Seed"
+          doctype="CRM Lead"
           :docname="leadId"
           :tabs="tabs"
           v-model:reload="reload"
@@ -207,7 +207,7 @@
       >
         <SidePanelLayout
           :sections="sections.data"
-          doctype="CRM Seed"
+          doctype="CRM Lead"
           :docname="leadId"
           @reload="sections.reload"
           @afterFieldChange="reloadAssignees"
@@ -227,7 +227,7 @@
   />
   <FilesUploader
     v-model="showFilesUploader"
-    doctype="CRM Seed"
+    doctype="CRM Lead"
     :docname="leadId"
     @after="
       () => {
@@ -239,7 +239,7 @@
   <DeleteLinkedDocModal
     v-if="showDeleteLinkedDocModal"
     v-model="showDeleteLinkedDocModal"
-    :doctype="'CRM Seed'"
+    :doctype="'CRM Lead'"
     :docname="leadId"
     name="Leads"
   />
@@ -303,7 +303,7 @@ import { useActiveTabManager } from '@/composables/useActiveTabManager'
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
 const { statusOptions, getLeadStatus } = statusesStore()
-const { doctypeMeta } = getMeta('CRM Seed')
+const { doctypeMeta } = getMeta('CRM Lead')
 
 const route = useRoute()
 const router = useRouter()
@@ -339,7 +339,7 @@ const showConvertToDealModal = ref(false)
 const showFilesUploader = ref(false)
 
 const { triggerOnChange, assignees, document, scripts, error } = useDocument(
-  'CRM Seed',
+  'CRM Lead',
   props.leadId,
 )
 
@@ -390,7 +390,7 @@ const breadcrumbs = computed(() => {
   let items = [{ label: __('Seed'), route: { name: 'Leads' } }]
 
   if (route.query.view || route.query.viewType) {
-    let view = getView(route.query.view, route.query.viewType, 'CRM Seed')
+    let view = getView(route.query.view, route.query.viewType, 'CRM Lead')
     if (view) {
       items.push({
         label: __(view.label),
@@ -412,7 +412,7 @@ const breadcrumbs = computed(() => {
 })
 
 const title = computed(() => {
-  let t = doctypeMeta['CRM Seed']?.title_field || 'name'
+  let t = doctypeMeta['CRM Lead']?.title_field || 'name'
   return doc?.[t] || props.leadId
 })
 
@@ -476,8 +476,8 @@ const { tabIndex, changeTabTo } = useActiveTabManager(tabs, 'lastLeadTab')
 
 const sections = createResource({
   url: 'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_sidepanel_sections',
-  cache: ['sidePanelSections', 'CRM Seed'],
-  params: { doctype: 'CRM Seed' },
+  cache: ['sidePanelSections', 'CRM Lead'],
+  params: { doctype: 'CRM Lead' },
   auto: true,
 })
 

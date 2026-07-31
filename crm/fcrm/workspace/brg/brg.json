@@ -92,7 +92,7 @@
    "color": "Green",
    "doc_view": "List",
    "label": "Seeds",
-   "link_to": "CRM Seed",
+   "link_to": "CRM Lead",
    "stats_filter": "[]",
    "type": "DocType"
   },
