@@ -10,7 +10,7 @@
       />
       <Button
         variant="solid"
-        :label="__('Create')"
+        :label="__('New Seed')"
         @click="showLeadModal = true"
       >
         <template #prefix><FeatherIcon name="plus" class="h-4" /></template>
@@ -23,7 +23,7 @@
     v-model:loadMore="loadMore"
     v-model:resizeColumn="triggerResize"
     v-model:updatedPageCount="updatedPageCount"
-    doctype="CRM Lead"
+    doctype="CRM Seed"
     :filters="{ converted: 0 }"
     :options="{
       allowedViews: ['list', 'group_by', 'kanban'],
@@ -258,8 +258,8 @@
       class="flex flex-col items-center gap-3 text-xl font-medium text-ink-gray-4"
     >
       <LeadsIcon class="h-10 w-10" />
-      <span>{{ __('No {0} Found', [__('Leads')]) }}</span>
-      <Button :label="__('Create')" @click="showLeadModal = true">
+      <span>{{ __('No {0} Found', [__('Seeds')]) }}</span>
+      <Button :label="__('New Seed')" @click="showLeadModal = true">
         <template #prefix><FeatherIcon name="plus" class="h-4" /></template>
       </Button>
     </div>
@@ -273,14 +273,14 @@
     v-if="showNoteModal"
     v-model="showNoteModal"
     :note="note"
-    doctype="CRM Lead"
+    doctype="CRM Seed"
     :doc="docname"
   />
   <TaskModal
     v-if="showTaskModal"
     v-model="showTaskModal"
     :task="task"
-    doctype="CRM Lead"
+    doctype="CRM Seed"
     :doc="docname"
   />
 </template>
@@ -314,7 +314,7 @@ import { useRoute } from 'vue-router'
 import { ref, computed, reactive, h } from 'vue'
 
 const { getFormattedPercent, getFormattedFloat, getFormattedCurrency } =
-  getMeta('CRM Lead')
+  getMeta('CRM Seed')
 const { makeCall } = globalStore()
 const { getUser } = usersStore()
 const { getLeadStatus } = statusesStore()
@@ -473,17 +473,21 @@ function parseRows(rows, columns = []) {
           color: color,
         }
       } else if (row == 'lead_owner') {
+        let owner = lead.lead_owner && getUser(lead.lead_owner)
         _rows[row] = {
-          label: lead.lead_owner && getUser(lead.lead_owner).full_name,
-          ...(lead.lead_owner && getUser(lead.lead_owner)),
+          label: owner?.full_name,
+          ...(owner || {}),
         }
       } else if (row == '_assign') {
         let assignees = JSON.parse(lead._assign || '[]')
-        _rows[row] = assignees.map((user) => ({
-          name: user,
-          image: getUser(user).user_image,
-          label: getUser(user).full_name,
-        }))
+        _rows[row] = assignees.map((user) => {
+          let userData = getUser(user)
+          return {
+            name: user,
+            image: userData?.user_image,
+            label: userData?.full_name,
+          }
+        }).filter(u => u.label) // Filter out null users
       } else if (['modified', 'creation'].includes(row)) {
         _rows[row] = {
           label: formatDate(lead[row]),
@@ -567,7 +571,7 @@ const task = ref({
   assigned_to: '',
   due_date: '',
   priority: 'Low',
-  status: 'Backlog',
+  status: 'Seed Gathering',
 })
 
 function showTask(name) {

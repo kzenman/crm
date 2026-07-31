@@ -1,7 +1,7 @@
 <template>
   <div class="flex justify-between gap-3 border-t px-4 py-2.5 sm:px-10">
     <div class="flex gap-1.5">
-      <Button
+      <!-- <Button
         ref="sendEmailRef"
         variant="ghost"
         :class="[
@@ -13,7 +13,7 @@
         <template #prefix>
           <Email2Icon class="h-4" />
         </template>
-      </Button>
+      </Button> -->
       <Button
         variant="ghost"
         :label="__('Comment')"
@@ -102,7 +102,7 @@ import { ref, watch, computed } from 'vue'
 const props = defineProps({
   doctype: {
     type: String,
-    default: 'CRM Lead',
+    default: 'CRM Seed',
   },
 })
 

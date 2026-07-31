@@ -49,7 +49,11 @@ function showTask(t) {
     assigned_to: '',
     due_date: '',
     priority: 'Low',
-    status: 'Backlog',
+    status: 'Seed Gathering',
+    seed: (props.doctype === 'CRM Seed' && doc.value?.name) ? doc.value.name : '',
+    repeat: 0,
+    repeat_sel: '',
+    completed: 0
   }
   showTaskModal.value = true
 }

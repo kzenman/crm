@@ -197,7 +197,7 @@ export function prettyDate(date, mini = false) {
 }
 
 export function taskStatusOptions(action, data) {
-  let options = ['Backlog', 'Todo', 'In Progress', 'Done', 'Canceled']
+  let options = ['Seed Gathering']
   let statusMeta = getMeta('CRM Task')
     .getFields()
     ?.find((field) => field.fieldname == 'status')
@@ -211,6 +211,31 @@ export function taskStatusOptions(action, data) {
       icon: () => h(TaskStatusIcon, { status }),
       label: status,
       onClick: () => action && action(status, data),
+    }
+  })
+}
+
+export function taskRepeatOptions(action, data) {
+  let options = ['1 week']
+  let statusMeta = getMeta('CRM Task')
+    .getFields()
+    ?.find((field) => field.fieldname == 'repeat_sel')
+  if (statusMeta) {
+    // Debug log the options
+    console.log('taskRepeatOptions statusMeta.options:', statusMeta.options)
+    options = statusMeta.options
+      .map((option) => option.value && option.value.trim())
+      .filter((option) => option)
+  }
+
+  // Debug log the final options
+  console.log('taskRepeatOptions final options:', options)
+
+  return options.map((priority) => {
+    return {
+      label: priority,
+      icon: () => h(TaskPriorityIcon, { priority }),
+      onClick: () => action && action(priority, data),
     }
   })
 }

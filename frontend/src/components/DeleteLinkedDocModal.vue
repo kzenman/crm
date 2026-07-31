@@ -255,11 +255,17 @@ const removeDocLinks = () => {
 }
 
 const deleteDoc = async () => {
-  await call('frappe.client.delete', {
-    doctype: props.doctype,
-    name: props.docname,
-  })
-  router.push({ name: props.name })
-  props?.reload?.()
+  try {
+    await call('frappe.client.delete', {
+      doctype: props.doctype,
+      name: props.docname,
+    })
+    show.value = false  // Close the modal after successful deletion
+    router.push({ name: props.name })
+    props?.reload?.()
+  } catch (error) {
+    // If there's an error, the modal will stay open to show the error
+    console.error('Failed to delete document:', error)
+  }
 }
 </script>

@@ -1,11 +1,11 @@
 app_name = "crm"
-app_title = "Frappe CRM"
+app_title = "Business Relationship Development"
 app_publisher = "Frappe Technologies Pvt. Ltd."
-app_description = "Kick-ass Open Source CRM"
+app_description = "Business Relationship Development tool to supercharge your sales operations"
 app_email = "shariq@frappe.io"
 app_license = "AGPLv3"
 app_icon_url = "/assets/crm/images/logo.svg"
-app_icon_title = "CRM"
+app_icon_title = "BRD"
 app_icon_route = "/crm"
 
 # Apps
@@ -16,7 +16,7 @@ add_to_apps_screen = [
 	{
 		"name": "crm",
 		"logo": "/assets/crm/images/logo.svg",
-		"title": "CRM",
+		"title": "BRD",
 		"route": "/crm",
 		"has_permission": "crm.api.check_app_permission",
 	}
@@ -154,9 +154,19 @@ doc_events = {
 		"on_update": ["crm.api.whatsapp.on_update"],
 	},
 	"CRM Deal": {
+		"validate": ["crm.utils.phone_formatting.format_doctype_phone_fields"],
 		"on_update": [
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext"
 		],
+	},
+	"CRM Seed": {
+		"validate": ["crm.utils.phone_formatting.format_doctype_phone_fields"],
+	},
+	"CRM Contacts": {
+		"validate": ["crm.utils.phone_formatting.format_doctype_phone_fields"],
+	},
+	"CRM Telephony Agent": {
+		"validate": ["crm.utils.phone_formatting.format_doctype_phone_fields"],
 	},
 	"User": {
 		"before_validate": ["crm.api.demo.validate_user"],

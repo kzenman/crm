@@ -1,7 +1,7 @@
 <template>
   <Avatar
-    :label="getUser(user).full_name"
-    :image="getUser(user).user_image"
+    :label="getUser(user)?.full_name || user || 'Unknown'"
+    :image="getUser(user)?.user_image || ''"
     v-bind="$attrs"
   />
 </template>

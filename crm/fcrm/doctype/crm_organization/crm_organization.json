@@ -49,8 +49,11 @@
   {
    "fieldname": "annual_revenue",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Annual Revenue",
-   "options": "currency"
+   "options": "currency",
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "industry",
@@ -86,8 +89,8 @@
  "image_field": "organization_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-15 11:40:12.175598",
- "modified_by": "Administrator",
+ "modified": "2025-09-25 09:26:31.533659",
+ "modified_by": "admin@tecc1.com",
  "module": "FCRM",
  "name": "CRM Organization",
  "naming_rule": "By fieldname",
@@ -95,7 +98,6 @@
  "permissions": [
   {
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -114,6 +116,30 @@
    "read": 1,
    "report": 1,
    "role": "Sales Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
    "share": 1,
    "write": 1
   }

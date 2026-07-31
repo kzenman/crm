@@ -135,7 +135,7 @@ const existingContact = ref('')
 const existingOrganization = ref('')
 const error = ref('')
 
-const { triggerConvertToDeal } = useDocument('CRM Lead', props.lead.name)
+const { triggerConvertToDeal } = useDocument('CRM Seed', props.lead.name)
 const { document: deal } = useDocument('CRM Deal')
 
 async function convertToDeal() {

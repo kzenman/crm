@@ -42,7 +42,7 @@
     v-if="doc.name"
     class="flex h-12 items-center justify-between gap-2 border-b px-3 py-2.5"
   >
-    <AssignTo v-model="assignees.data" doctype="CRM Lead" :docname="leadId" />
+    <AssignTo v-model="assignees.data" doctype="CRM Seed" :docname="leadId" />
     <div class="flex items-center gap-2">
       <CustomActions
         v-if="document._actions?.length"
@@ -52,11 +52,11 @@
         v-if="document.actions?.length"
         :actions="document.actions"
       />
-      <Button
+<!--       <Button
         :label="__('Convert')"
         variant="solid"
         @click="showConvertToDealModal = true"
-      />
+      /> -->
     </div>
   </div>
   <div v-if="doc.name" class="flex h-full overflow-hidden">
@@ -75,7 +75,7 @@
           >
             <SidePanelLayout
               :sections="sections.data"
-              doctype="CRM Lead"
+              doctype="CRM Seed"
               :docname="leadId"
               @reload="sections.reload"
               @afterFieldChange="reloadAssignees"
@@ -84,7 +84,7 @@
         </div>
         <Activities
           v-else
-          doctype="CRM Lead"
+          doctype="CRM Seed"
           :docname="leadId"
           :tabs="tabs"
           v-model:reload="reload"
@@ -169,7 +169,7 @@
   <DeleteLinkedDocModal
     v-if="showDeleteLinkedDocModal"
     v-model="showDeleteLinkedDocModal"
-    :doctype="'CRM Lead'"
+    :doctype="'CRM Seed'"
     :docname="leadId"
     name="Leads"
   />
@@ -229,7 +229,7 @@ import { useRouter, useRoute } from 'vue-router'
 const { brand } = getSettings()
 const { $dialog, $socket } = globalStore()
 const { statusOptions, getLeadStatus } = statusesStore()
-const { doctypeMeta } = getMeta('CRM Lead')
+const { doctypeMeta } = getMeta('CRM Seed')
 const route = useRoute()
 const router = useRouter()
 
@@ -245,7 +245,7 @@ const errorMessage = ref('')
 const showDeleteLinkedDocModal = ref(false)
 
 const { triggerOnChange, assignees, document, scripts, error } = useDocument(
-  'CRM Lead',
+  'CRM Seed',
   props.leadId,
 )
 
@@ -290,10 +290,10 @@ watch(
 const reload = ref(false)
 
 const breadcrumbs = computed(() => {
-  let items = [{ label: __('Leads'), route: { name: 'Leads' } }]
+  let items = [{ label: __('Seed'), route: { name: 'Leads' } }]
 
   if (route.query.view || route.query.viewType) {
-    let view = getView(route.query.view, route.query.viewType, 'CRM Lead')
+    let view = getView(route.query.view, route.query.viewType, 'CRM Seed')
     if (view) {
       items.push({
         label: __(view.label),
@@ -315,7 +315,7 @@ const breadcrumbs = computed(() => {
 })
 
 const title = computed(() => {
-  let t = doctypeMeta['CRM Lead']?.title_field || 'name'
+  let t = doctypeMeta['CRM Seed']?.title_field || 'name'
   return doc.value?.[t] || props.leadId
 })
 
@@ -328,38 +328,38 @@ usePageMeta(() => {
 
 const tabs = computed(() => {
   let tabOptions = [
+//     {
+//       name: 'Details',
+//       label: __('Details'),
+//       icon: DetailsIcon,
+//       condition: () => isMobileView.value,
+//     },
     {
-      name: 'Details',
-      label: __('Details'),
+      name: 'Data',
+      label: __('About Seed'),
       icon: DetailsIcon,
-      condition: () => isMobileView.value,
     },
     {
       name: 'Activity',
       label: __('Activity'),
       icon: ActivityIcon,
     },
-    {
-      name: 'Emails',
-      label: __('Emails'),
-      icon: EmailIcon,
-    },
+//     {
+//       name: 'Email Templates',
+//       label: __('Email Templates'),
+//       icon: EmailIcon,
+//     },
     {
       name: 'Comments',
       label: __('Comments'),
       icon: CommentIcon,
     },
-    {
-      name: 'Data',
-      label: __('Data'),
-      icon: DetailsIcon,
-    },
-    {
-      name: 'Calls',
-      label: __('Calls'),
-      icon: PhoneIcon,
-      condition: () => callEnabled.value,
-    },
+//     {
+//       name: 'Calls',
+//       label: __('Calls'),
+//       icon: PhoneIcon,
+//       condition: () => callEnabled.value,
+//     },
     {
       name: 'Tasks',
       label: __('Tasks'),
@@ -389,8 +389,8 @@ const { tabIndex } = useActiveTabManager(tabs, 'lastLeadTab')
 
 const sections = createResource({
   url: 'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_sidepanel_sections',
-  cache: ['sidePanelSections', 'CRM Lead'],
-  params: { doctype: 'CRM Lead' },
+  cache: ['sidePanelSections', 'CRM Seed'],
+  params: { doctype: 'CRM Seed' },
   auto: true,
 })
 

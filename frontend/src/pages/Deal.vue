@@ -541,8 +541,8 @@ const tabs = computed(() => {
       icon: ActivityIcon,
     },
     {
-      name: 'Emails',
-      label: __('Emails'),
+      name: 'Email Templates',
+      label: __('Email Templates'),
       icon: EmailIcon,
     },
     {

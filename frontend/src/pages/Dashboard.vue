@@ -1,320 +1,319 @@
 <template>
-  <div class="flex flex-col h-full overflow-hidden">
-    <LayoutHeader>
-      <template #left-header>
-        <ViewBreadcrumbs routeName="Dashboard" />
-      </template>
-      <template #right-header>
-        <Button
-          v-if="!editing"
-          :label="__('Refresh')"
-          @click="dashboardItems.reload"
-        >
-          <template #prefix>
-            <LucideRefreshCcw class="size-4" />
-          </template>
-        </Button>
-        <Button
-          v-if="!editing && isAdmin()"
-          :label="__('Edit')"
-          @click="enableEditing"
-        >
-          <template #prefix>
-            <LucidePenLine class="size-4" />
-          </template>
-        </Button>
-        <Button
-          v-if="editing"
-          :label="__('Chart')"
-          icon-left="plus"
-          @click="showAddChartModal = true"
-        />
-        <Button
-          v-if="editing && isAdmin()"
-          :label="__('Reset to default')"
-          @click="resetToDefault"
-        >
-          <template #prefix>
-            <LucideUndo2 class="size-4" />
-          </template>
-        </Button>
-        <Button v-if="editing" :label="__('Cancel')" @click="cancel" />
-        <Button
-          v-if="editing"
-          variant="solid"
-          :label="__('Save')"
-          :disabled="!dirty"
-          :loading="saveDashboard.loading"
-          @click="save"
-        />
-      </template>
-    </LayoutHeader>
-
-    <div class="p-5 pb-2 flex items-center gap-4">
-      <Dropdown
-        v-if="!showDatePicker"
-        :options="options"
-        class="form-control"
-        v-model="preset"
-        :placeholder="__('Select Range')"
-        :button="{
-          label: __(preset),
-          class:
-            '!w-full justify-start [&>span]:mr-auto [&>svg]:text-ink-gray-5 ',
-          variant: 'outline',
-          iconRight: 'chevron-down',
-          iconLeft: 'calendar',
-        }"
+  
+  <div class="wrap text-gray-900 dark:text-gray-100">
+    <h1 class="h1">Welcome to your BRG Dashboard</h1>
+  <div>
+    <!-- Tab buttons (horizontal navigation) -->
+    <div class="tabs-header">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        :class="{ 'active-tab': activeTab === tab.id }"
+        @click="activeTab = tab.id"
       >
-        <template #prefix>
-          <LucideCalendar class="size-4 text-ink-gray-5 mr-2" />
-        </template>
-      </Dropdown>
-      <DateRangePicker
-        v-else
-        class="!w-48"
-        ref="datePickerRef"
-        :value="filters.period"
-        variant="outline"
-        :placeholder="__('Period')"
-        @change="
-          (v) =>
-            updateFilter('period', v, () => {
-              showDatePicker = false
-              if (!v) {
-                filters.period = getLastXDays()
-                preset = 'Last 30 Days'
-              } else {
-                preset = formatter(v)
-              }
-            })
-        "
-        :formatter="formatRange"
-      >
-        <template #prefix>
-          <LucideCalendar class="size-4 text-ink-gray-5 mr-2" />
-        </template>
-      </DateRangePicker>
-      <Link
-        v-if="isAdmin() || isManager()"
-        class="form-control w-48"
-        variant="outline"
-        :value="filters.user && getUser(filters.user).full_name"
-        doctype="User"
-        :filters="{ name: ['in', users.data.crmUsers?.map((u) => u.name)] }"
-        @change="(v) => updateFilter('user', v)"
-        :placeholder="__('Sales user')"
-        :hideMe="true"
-      >
-        <template #prefix>
-          <UserAvatar
-            v-if="filters.user"
-            class="mr-2"
-            :user="filters.user"
-            size="sm"
-          />
-        </template>
-        <template #item-prefix="{ option }">
-          <UserAvatar class="mr-2" :user="option.value" size="sm" />
-        </template>
-        <template #item-label="{ option }">
-          <Tooltip :text="option.value">
-            <div class="cursor-pointer">
-              {{ getUser(option.value).full_name }}
-            </div>
-          </Tooltip>
-        </template>
-      </Link>
+        {{ tab.label }}
+      </button>
     </div>
 
-    <div class="w-full overflow-y-scroll">
-      <DashboardGrid
-        class="pt-1"
-        v-if="!dashboardItems.loading && dashboardItems.data"
-        v-model="dashboardItems.data"
-        :editing="editing"
-      />
-    </div>
   </div>
-  <AddChartModal
-    v-if="showAddChartModal"
-    v-model="showAddChartModal"
-    v-model:items="dashboardItems.data"
-  />
+
+    <div v-show="activeTab === 'tab1'">
+      <!-- Last 30 days by STATUS -->
+      <section class="card">
+        <div class="card-head">
+          <div class="badge">◎</div>
+          <div class="title">Seeds Generated</div>
+        </div>
+        <div class="card-body">
+          <p class="muted">Total Seeds (last 30 days, grouped by status)</p>
+          <div class="chart-wrap"><canvas ref="leadsEl" height="210" /></div>
+        </div>
+      </section>
+
+      <!-- Lifetime -->
+      <section class="card">
+        <div class="card-head">
+          <div class="badge">◎</div>
+          <div class="title">Total Seeds (lifetime)</div>
+        </div>
+        <div class="card-body">
+          <p class="muted">Harvest & Re‑Watering by year</p>
+          <div class="chart-wrap"><canvas ref="lifetimeEl" height="210" /></div>
+        </div>
+      </section>
+    </div>
+    
+    <!-- Tab content -->
+    <div v-show="activeTab === 'tab2'" class="tabs-content">
+      <Gathering :company="userCompany" />
+    </div>
+    
+  </div>
 </template>
 
-<script setup lang="ts">
-import AddChartModal from '@/components/Dashboard/AddChartModal.vue'
-import LucideRefreshCcw from '~icons/lucide/refresh-ccw'
-import LucideUndo2 from '~icons/lucide/undo-2'
-import LucidePenLine from '~icons/lucide/pen-line'
-import DashboardGrid from '@/components/Dashboard/DashboardGrid.vue'
-import UserAvatar from '@/components/UserAvatar.vue'
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
-import Link from '@/components/Controls/Link.vue'
+<script setup>
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { call } from 'frappe-ui'
+import Chart from 'chart.js/auto'    
 import { usersStore } from '@/stores/users'
-import { copy } from '@/utils'
-import { getLastXDays, formatter, formatRange } from '@/utils/dashboard'
-import {
-  usePageMeta,
-  createResource,
-  DateRangePicker,
-  Dropdown,
-  Tooltip,
-} from 'frappe-ui'
-import { ref, reactive, computed, provide } from 'vue'
+import { sessionStore } from '@/stores/session'
+import Gathering from '@/components/Dashboard/Gathering.vue' // adjust path as needed
+  
+const activeTab = ref('tab1');
+let userCompany = ref('Cherry Coatings')
 
-const { users, getUser, isManager, isAdmin } = usersStore()
+// An array of tab data.
+const tabs = [
+  { id: 'tab1', label: 'Personal' },
+  { id: 'tab2', label: 'Overall' },
+]
+  
+const currentTab = computed(() => tabs.find(t => t.id === activeTab.value))  
 
-const editing = ref(false)
+const { user } = sessionStore()
+const users  = usersStore();  
+let curr_user = users.getUser(user);
+  
+// console.log('76 users', users, 'curr_user', curr_user);
+  
+const leadsEl = ref(null)
+const lifetimeEl = ref(null)
+let leadsChart, lifetimeChart
+const leads = ref([])
 
-const showDatePicker = ref(false)
-const datePickerRef = ref(null)
-const preset = ref('Last 30 Days')
-const showAddChartModal = ref(false)
 
-const filters = reactive({
-  period: getLastXDays(),
-  user: null,
-})
 
-const fromDate = computed(() => {
-  if (!filters.period) return null
-  return filters.period.split(',')[0]
-})
-
-const toDate = computed(() => {
-  if (!filters.period) return null
-  return filters.period.split(',')[1]
-})
-
-function updateFilter(key: string, value: any, callback?: () => void) {
-  filters[key] = value
-  callback?.()
-  dashboardItems.reload()
+const STATUS_KEYS = ['Seed Gathering','Seed Planting','Watering','Harvest','Re-Watering']
+const COLORS = {
+  'Seed Gathering': '#FFFF00', // orange-400
+  'Seed Planting' : '#f59e0b', // amber-500
+  'Watering'      : '#3b82f6', // blue-500
+  'Harvest'       : '#22c55e', // green-500
+  'Re-Watering'   : '#00008B', // dark blue
 }
 
-const options = computed(() => [
-  {
-    group: 'Presets',
-    hideLabel: true,
-    items: [
-      {
-        label: 'Last 7 Days',
-        onClick: () => {
-          preset.value = 'Last 7 Days'
-          filters.period = getLastXDays(7)
-          dashboardItems.reload()
-        },
-      },
-      {
-        label: 'Last 30 Days',
-        onClick: () => {
-          preset.value = 'Last 30 Days'
-          filters.period = getLastXDays(30)
-          dashboardItems.reload()
-        },
-      },
-      {
-        label: 'Last 60 Days',
-        onClick: () => {
-          preset.value = 'Last 60 Days'
-          filters.period = getLastXDays(60)
-          dashboardItems.reload()
-        },
-      },
-      {
-        label: 'Last 90 Days',
-        onClick: () => {
-          preset.value = 'Last 90 Days'
-          filters.period = getLastXDays(90)
-          dashboardItems.reload()
-        },
-      },
-    ],
-  },
-  {
-    label: 'Custom Range',
-    onClick: () => {
-      showDatePicker.value = true
-      setTimeout(() => datePickerRef.value?.open(), 0)
-      preset.value = 'Custom Range'
-      filters.period = null // Reset period to allow custom date selection
-    },
-  },
-])
+function normStatus(s) {
+  const v = String(s || '').toLowerCase()
+  if (v.includes('gather')) return 'Seed Gathering'
+  if (v.includes('plant'))  return 'Seed Planting'
+  if (v.includes('re') && v.includes('water')) return 'Re-Watering'
+  if (v.includes('water'))  return 'Watering'
+  if (v.includes('harvest'))return 'Harvest'
+  return null
+}
 
-const dashboardItems = createResource({
-  url: 'crm.api.dashboard.get_dashboard',
-  cache: ['Analytics', 'ManagerDashboard'],
-  makeParams() {
-    return {
-      from_date: fromDate.value,
-      to_date: toDate.value,
-      user: filters.user,
+async function fetchLeadsForLoggedUser(curr_user) {
+  // get logged user (email/username)
+//   const user = await call('frappe.auth.get_logged_user')
+  if (!curr_user) return
+
+  const result = await call('frappe.client.get_list', {
+    doctype: 'CRM Seed',
+    filters: { lead_owner: curr_user.email },
+    fields: ['name','modified','creation','status','source'],
+    limit: 1000
+  })
+  leads.value = result || []
+}
+
+function computeFromLeads() {
+  const weekly = Object.fromEntries(STATUS_KEYS.map(k => [k, [0,0,0,0]]))
+  const harvestByYear = new Map()
+  const rewaterByYear = new Map()
+
+  const now = new Date()
+  const DAY = 24*60*60*1000
+
+  for (const lead of leads.value) {
+    const s = normStatus(lead.status)
+    const mod = new Date(lead.modified || lead.creation || now)
+    const diff = now - mod
+
+    // 30‑day weekly buckets
+    if (s && diff >= 0 && diff < 30*DAY) {
+      const w = Math.min(3, Math.floor(diff / (7*DAY))) // 0..3
+      weekly[s][w]++
     }
-  },
-  auto: true,
-})
 
-const dirty = computed(() => {
-  if (!editing.value) return false
-  return JSON.stringify(dashboardItems.data) !== JSON.stringify(oldItems.value)
-})
+    // lifetime by year (harvest / re‑watering only)
+    const y = String(mod.getFullYear())
+    if (s === 'Harvest') {
+      harvestByYear.set(y, (harvestByYear.get(y) || 0) + 1)
+    } else if (s === 'Re-Watering') {
+      rewaterByYear.set(y, (rewaterByYear.get(y) || 0) + 1)
+    }
+  }
 
-const oldItems = ref([])
+  let years = Array.from(new Set([...harvestByYear.keys(), ...rewaterByYear.keys()]))
+    .sort((a,b)=>Number(a)-Number(b))
+  if (!years.length) years = [String(new Date().getFullYear())]
 
-provide('fromDate', fromDate)
-provide('toDate', toDate)
-provide('filters', filters)
+  const harvestSeries = years.map(y => harvestByYear.get(y) || 0)
+  const rewaterSeries = years.map(y => rewaterByYear.get(y) || 0)
 
-function enableEditing() {
-  editing.value = true
-  oldItems.value = copy(dashboardItems.data)
+  return { weekly, years, harvestSeries, rewaterSeries }
 }
 
-function cancel() {
-  editing.value = false
-  dashboardItems.data = copy(oldItems.value)
-}
+function buildCharts() {
+  const { weekly, years, harvestSeries, rewaterSeries } = computeFromLeads()
 
-const saveDashboard = createResource({
-  url: 'frappe.client.set_value',
-  method: 'POST',
-  onSuccess: () => {
-    dashboardItems.reload()
-    editing.value = false
-  },
-})
+  leadsChart?.destroy()
+  lifetimeChart?.destroy()
 
-function save() {
-  const dashboardItemsCopy = copy(dashboardItems.data)
-
-  dashboardItemsCopy.forEach((item: any) => {
-    delete item.data
-  })
-
-  saveDashboard.submit({
-    doctype: 'CRM Dashboard',
-    name: 'Manager Dashboard',
-    fieldname: 'layout',
-    value: JSON.stringify(dashboardItemsCopy),
-  })
-}
-
-function resetToDefault() {
-  createResource({
-    url: 'crm.api.dashboard.reset_to_default',
-    auto: true,
-    onSuccess: () => {
-      dashboardItems.reload()
-      editing.value = false
+  // 30‑day by STATUS
+  leadsChart = new Chart(leadsEl.value, {
+    type: 'bar',
+    data: {
+      labels: ['Week 1','Week 2','Week 3','Week 4'], // Week 1 = most recent 0–6 days
+      datasets: STATUS_KEYS.map(k => ({
+        label: k,
+        data: weekly[k],
+        backgroundColor: COLORS[k]
+      }))
     },
+    options: {
+      responsive: true,
+      aspectRatio: 2.4,
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#eef2ee' } },
+        x: { grid: { color: '#f4f7f5' } }
+      },
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 14, boxHeight: 14 } },
+        tooltip: { mode: 'index', intersect: false }
+      }
+    }
+  })
+
+  // Lifetime (Harvest + Re‑Watering)
+  lifetimeChart = new Chart(lifetimeEl.value, {
+    type: 'bar',
+    data: {
+      labels: years,
+      datasets: [
+        { label: 'Harvest',     data: harvestSeries, backgroundColor: COLORS['Harvest'] },
+        { label: 'Re-Watering', data: rewaterSeries, backgroundColor: COLORS['Re-Watering'] }
+      ]
+    },
+    options: {
+      responsive: true,
+      aspectRatio: 2.4,
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#eef2ee' } },
+        x: { grid: { color: '#f4f7f5' } }
+      },
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 14, boxHeight: 14 } },
+        tooltip: { mode: 'index', intersect: false }
+      }
+    }
   })
 }
 
-usePageMeta(() => {
-  return { title: __('CRM Dashboard') }
+onMounted(async () => {
+  // init once
+//   leadsChart = new Chart(leadsEl.value.getContext('2d'), {/* your config */})
+//   lifetimeChart = new Chart(lifetimeEl.value.getContext('2d'), {/* your config */})
+  try {
+    const companies = await call('frappe.client.get_list', {
+      doctype: 'Company',
+      fields: ['company_name'],
+      limit: 1000
+    });
+     const emp = await call('frappe.client.get_list', {
+      doctype: 'Employee',
+      filters: { user_id: curr_user?.email || user },
+      fields: ['company'],
+      limit: 1
+    });
+//      const seeds = await call('frappe.client.get_list', {
+//       doctype: 'CRM Seed',
+// //       filters: { user_id: curr_user?.email || user },
+//       fields: ['lead_owner,status'],
+//       limit: 1
+//     });
+       
+    const gd = await call('frappe.client.get_value', {
+      doctype: 'Global Defaults',
+      fieldname: 'default_company'
+    })
+     
+// console.log('220 companies', companies, 'emp', emp, 'gd', gd.default_company, 'userCompany', userCompany.value); 
+    
+     userCompany.value = emp[0].company || gd.default_company;
+        
+    await fetchLeadsForLoggedUser(curr_user)
+    await nextTick()          // ensure canvases exist
+    buildCharts()
+  } catch (e) {
+    console.error('Dashboard fetch/build error', e)
+  }
 })
+
+onBeforeUnmount(() => {
+  leadsChart?.destroy()
+  lifetimeChart?.destroy()
+})
+  
+watch(activeTab, (val) => {
+  if (val === 'tab1') {
+    nextTick(() => {
+      leadsChart?.resize(); leadsChart?.update()
+      lifetimeChart?.resize(); lifetimeChart?.update()
+    })
+  }
+})  
 </script>
+
+<style scoped>
+:root{
+  --bg: #f0ffeF;
+  --card: #fff;
+  --text: #243b2f;
+  --muted: #6b7e75;
+  --ring: #d9f0df;
+  --radius: 14px;
+}
+.wrap{ max-width:980px; padding:0 16px; }
+.h1{ font-size:clamp(26px,4vw,40px); font-weight:800; text-align:center; margin:8px 0 26px; }
+.card{ background:#fff; border-radius:var(--radius); border:1px solid #eef4ee; box-shadow:0 1px 0 rgba(0,0,0,.04),0 10px 24px rgba(0,0,0,.06); margin:18px 0 26px; overflow:hidden; }
+.card-head{ display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid #eef3ef; background:linear-gradient(#f7fff7,#fff); }
+.badge{ display:grid; place-items:center; width:28px; height:28px; border-radius:999px; background:var(--ring); color:#20a13f; font-size:16px; }
+.title{ font-weight:800; color:#1e7e34; letter-spacing:.15px; }
+.card-body{ padding:16px 18px 22px; }
+.muted{ color:var(--muted); font-size:14px; margin:2px 0 12px; }
+.chart-wrap{ width:100%; overflow-x:auto; padding-bottom:6px; }
+canvas{ max-width:100%; }
+
+.tabs-header {
+  display: flex;
+  justify-content: flex-start;
+  border-bottom: 2px solid #ccc;
+  gap: 10px;
+}
+
+.tabs-header button {
+  padding: 10px 20px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+.tabs-header button:hover {
+  border-color: #eee;
+}
+
+.tabs-header button.active-tab {
+  border-color: #1e7e34;
+  font-weight: bold;
+  color: #1e7e34;
+}
+
+.tabs-content {
+  padding: 5px;
+/*   border: 1px solid #ccc; */
+  border-top: none;
+}
+</style>

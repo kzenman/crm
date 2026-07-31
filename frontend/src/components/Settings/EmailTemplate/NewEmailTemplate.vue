@@ -55,8 +55,8 @@
                 value: 'CRM Deal',
               },
               {
-                label: __('Lead'),
-                value: 'CRM Lead',
+                label: __('Seed'),
+                value: 'CRM Seed',
               },
             ]"
             :placeholder="__('Deal')"

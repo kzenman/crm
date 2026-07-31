@@ -173,6 +173,18 @@ import { isTouchScreenDevice, colors, parseColor } from '@/utils'
 import Draggable from 'vuedraggable'
 import { Dropdown } from 'frappe-ui'
 import { computed } from 'vue'
+  
+const GROUP_ORDER = [
+  'Plotting The Garden',
+  'Seed Gathering',
+  'Seed Planting',
+  'Watering',
+  'Harvest',
+  'ReWatering',
+];
+const orderMap = Object.fromEntries(GROUP_ORDER.map((s, i) => [s.toLowerCase(), i]));
+  
+const norm = (v) => (typeof v === 'string' ? v.trim().toLowerCase() : '');
 
 const props = defineProps({
   options: {
@@ -193,19 +205,44 @@ const titleField = computed(() => {
   return kanban.value?.data?.title_field
 })
 
-const columns = computed(() => {
-  if (!kanban.value?.data?.data || kanban.value.data.view_type != 'kanban')
-    return []
-  let _columns = kanban.value.data.data
+// const columns = computed(() => {
+//   if (!kanban.value?.data?.data || kanban.value.data.view_type != 'kanban')
+//     return []
+//   let _columns = kanban.value.data.data
 
-  let has_color = _columns.some((column) => column.column?.color)
-  if (!has_color) {
-    _columns.forEach((column, i) => {
-      column.column['color'] = colors[i % colors.length]
-    })
+//   let has_color = _columns.some((column) => column.column?.color)
+//   if (!has_color) {
+//     _columns.forEach((column, i) => {
+//       column.column['color'] = colors[i % colors.length]
+//     })
+//   }
+//   return _columns
+// })
+  
+const columns = computed(() => {
+  if (!kanban.value?.data?.data || kanban.value.data.view_type != 'kanban') return [];
+
+  // clone with original index for stable fallback
+  const withIdx = kanban.value.data.data.map((c, i) => ({ c, i }));
+  withIdx.sort((a, b) => {
+    const ai = orderMap[norm(a.c?.column?.name)] ?? 999;
+    const bi = orderMap[norm(b.c?.column?.name)] ?? 999;
+    if (ai !== bi) return ai - bi;      // our fixed order first
+    return a.i - b.i;                   // keep original order among unknowns
+  });
+
+  const _columns = withIdx.map(({ c }) => c);
+
+console.log('273 withIdx',withIdx, '_columns', _columns);
+  // ensure a color exists, but don’t overwrite existing colors
+  const hasColor = _columns.some((col) => col.column?.color);
+  if (!hasColor) {
+    _columns.forEach((col, i) => {
+      if (!col.column.color) col.column.color = colors[i % colors.length];
+    });
   }
-  return _columns
-})
+  return _columns;
+});  
 
 const deletedColumns = computed(() => {
   return columns.value

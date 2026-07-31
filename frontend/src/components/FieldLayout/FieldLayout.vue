@@ -32,7 +32,7 @@ const props = defineProps({
   data: Object,
   doctype: {
     type: String,
-    default: 'CRM Lead',
+    default: 'CRM Seed',
   },
   isGridRow: {
     type: Boolean,
@@ -56,6 +56,9 @@ provide(
   'data',
   computed(() => props.data),
 )
+  
+// console.log('60 hasTabs', hasTabs, 'props', props);  
+  
 provide('hasTabs', hasTabs)
 provide('doctype', props.doctype)
 provide('preview', props.preview)

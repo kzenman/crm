@@ -2,7 +2,7 @@
   <ListView
     :class="$attrs.class"
     :columns="columns"
-    :rows="rows"
+    :rows="orderedRows"
     :options="{
       getRowRoute: (row) => ({
         name: 'Lead',
@@ -38,9 +38,9 @@
       </ListHeaderItem>
     </ListHeader>
     <ListRows
-      :rows="rows"
+      :rows="orderedRows"
       v-slot="{ idx, column, item, row }"
-      doctype="CRM Lead"
+      doctype="CRM Seed"
     >
       <div v-if="column.key === '_assign'" class="flex items-center">
         <MultipleAvatar
@@ -188,8 +188,8 @@
     </ListSelectBanner>
   </ListView>
   <ListFooter
-    v-if="pageLengthCount"
-    class="border-t sm:px-5 px-3 py-2"
+    v-if="props.rows && props.rows.length > 0"
+    class="border-t sm:px-5 px-3 py-2 mobile-footer-spacing"
     v-model="pageLengthCount"
     :options="{
       rowCount: options.rowCount,
@@ -197,7 +197,7 @@
     }"
     @loadMore="emit('loadMore')"
   />
-  <ListBulkActions ref="listBulkActionsRef" v-model="list" doctype="CRM Lead" />
+  <ListBulkActions ref="listBulkActionsRef" v-model="list" doctype="CRM Seed" />
 </template>
 
 <script setup>
@@ -242,6 +242,49 @@ const props = defineProps({
     }),
   },
 })
+
+
+const GROUP_ORDER = [
+  'Plotting The Garden',
+  'Seed Gathering',
+  'Seed Planting',
+  'Watering',
+  'Harvest',
+  'Re-watering',
+];
+
+// normalize to avoid curly dashes / zero-width chars causing mis-ordering
+const normalizeKey = (v) =>
+  typeof v === 'string'
+    ? v
+        .normalize('NFKC')
+        .replace(/[\u200B\u200C\u200D\uFEFF]/g, '') // zero-width
+        .toLowerCase()
+        .replace(/[\s\-_]+/g, '')                  // spaces, hyphens, underscores
+        .replace(/[^a-z0-9]/g, '')                 // other punctuation
+    : '';
+
+const orderMap = Object.fromEntries(GROUP_ORDER.map((s, i) => [normalizeKey(s), i]));
+
+const statusKey = (row) => {
+  const s = row?.status; // can be string or {label,value,color}
+  const raw = typeof s === 'object' ? (s.value ?? s.label ?? '') : (s ?? '');
+//console.log('271 statusKey', raw, 'label',normalizeKey(raw));
+  return normalizeKey(raw);
+};
+
+const orderedRows = computed(() => {
+  const src = Array.isArray(props.rows) ? props.rows.map((r, i) => ({ r, i })) : [];
+  src.sort((a, b) => {
+    const ai = orderMap[statusKey(a.r)] ?? 999;
+    const bi = orderMap[statusKey(b.r)] ?? 999;
+    return ai !== bi ? ai - bi : a.i - b.i; // stable within same bucket
+  });
+  return src.map(({ r }) => r); // return original row objects (preserves colors)
+});
+
+
+
 const emit = defineEmits([
   'loadMore',
   'updatePageCount',
@@ -260,6 +303,8 @@ const list = defineModel('list')
 const isLikeFilterApplied = computed(() => {
   return list.value.params?.filters?._liked_by ? true : false
 })
+
+console.log('273 props', props);
 
 const { user } = sessionStore()
 
@@ -283,3 +328,36 @@ defineExpose({
   ),
 })
 </script>
+
+<style scoped>
+/* 
+  MOBILE FOOTER SPACING FIX - Dec 2024
+  
+  Issue: On iPhone Safari, the ListFooter (pagination/Load More button) was being 
+  hidden behind the fixed BottomNav component and Safari's bottom UI bar.
+  
+  Solution: Apply extra bottom spacing ONLY on iOS Safari to push the footer above
+  the BottomNav. Android Chrome doesn't need this extra spacing as it handles the
+  layout differently.
+  
+  Detection: Uses @supports (-webkit-touch-callout: none) which is iOS-only.
+  - iOS Safari: Gets 40px margin-bottom + 20px padding-bottom
+  - Android/Other: Gets minimal spacing (0px margin + 5px padding)
+  
+  Desktop is unaffected due to @media (max-width: 768px) constraint.
+*/
+@media (max-width: 768px) {
+  .mobile-footer-spacing {
+    margin-bottom: 0px;
+    padding-bottom: 5px;
+  }
+  
+  /* iOS Safari specific using -webkit-touch-callout which only iOS supports */
+  @supports (-webkit-touch-callout: none) {
+    .mobile-footer-spacing {
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+    }
+  }
+}
+</style>

@@ -16,7 +16,7 @@
         v-if="document.actions?.length"
         :actions="document.actions"
       />
-      <AssignTo v-model="assignees.data" doctype="CRM Lead" :docname="leadId" />
+      <AssignTo v-model="assignees.data" doctype="CRM Seed" :docname="leadId" />
       <Dropdown
         v-if="doc"
         :options="
@@ -41,11 +41,11 @@
           </Button>
         </template>
       </Dropdown>
-      <Button
+<!--       <Button
         :label="__('Convert to Deal')"
         variant="solid"
         @click="showConvertToDealModal = true"
-      />
+      /> -->
     </template>
   </LayoutHeader>
   <div v-if="doc.name" class="flex h-full overflow-hidden">
@@ -53,7 +53,7 @@
       <template #tab-panel>
         <Activities
           ref="activities"
-          doctype="CRM Lead"
+          doctype="CRM Seed"
           :docname="leadId"
           :tabs="tabs"
           v-model:reload="reload"
@@ -141,7 +141,7 @@
                     </Button>
                   </div>
                 </Tooltip>
-                <Tooltip :text="__('Send an email')">
+<!--                 <Tooltip :text="__('Send an email')">
                   <div>
                     <Button
                       @click="
@@ -155,7 +155,7 @@
                       </template>
                     </Button>
                   </div>
-                </Tooltip>
+                </Tooltip> -->
                 <Tooltip :text="__('Go to website')">
                   <div>
                     <Button
@@ -207,7 +207,7 @@
       >
         <SidePanelLayout
           :sections="sections.data"
-          doctype="CRM Lead"
+          doctype="CRM Seed"
           :docname="leadId"
           @reload="sections.reload"
           @afterFieldChange="reloadAssignees"
@@ -227,7 +227,7 @@
   />
   <FilesUploader
     v-model="showFilesUploader"
-    doctype="CRM Lead"
+    doctype="CRM Seed"
     :docname="leadId"
     @after="
       () => {
@@ -239,7 +239,7 @@
   <DeleteLinkedDocModal
     v-if="showDeleteLinkedDocModal"
     v-model="showDeleteLinkedDocModal"
-    :doctype="'CRM Lead'"
+    :doctype="'CRM Seed'"
     :docname="leadId"
     name="Leads"
   />
@@ -299,10 +299,11 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useActiveTabManager } from '@/composables/useActiveTabManager'
 
+
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
 const { statusOptions, getLeadStatus } = statusesStore()
-const { doctypeMeta } = getMeta('CRM Lead')
+const { doctypeMeta } = getMeta('CRM Seed')
 
 const route = useRoute()
 const router = useRouter()
@@ -316,6 +317,21 @@ const props = defineProps({
 
 const reload = ref(false)
 const activities = ref(null)
+
+
+//     const activeUsersResource = createResource({
+//         url: 'frappe.db.get_list',
+//         params: {
+//             doctype: 'Employee', // Specify the DocType as 'User'
+//             // filters: {
+//             //     enabled: 1 // Filter for users where 'enabled' is true (active)
+//             // },
+//             fields: ['*'] // Specify the fields you want to retrieve
+//         }
+//     });
+
+    
+//   console.log('activeUsersResource:', activeUsersResource.fetch(), activeUsersResource.data);
 const errorTitle = ref('')
 const errorMessage = ref('')
 const showDeleteLinkedDocModal = ref(false)
@@ -323,7 +339,7 @@ const showConvertToDealModal = ref(false)
 const showFilesUploader = ref(false)
 
 const { triggerOnChange, assignees, document, scripts, error } = useDocument(
-  'CRM Lead',
+  'CRM Seed',
   props.leadId,
 )
 
@@ -365,11 +381,16 @@ watch(
   { once: true },
 )
 
+watch(assignees, (v) => {
+  console.log("Lead.vue received assignees from backend:", v)
+  console.log("Full document:", document.value)
+}, { deep: true })
+
 const breadcrumbs = computed(() => {
-  let items = [{ label: __('Leads'), route: { name: 'Leads' } }]
+  let items = [{ label: __('Seed'), route: { name: 'Leads' } }]
 
   if (route.query.view || route.query.viewType) {
-    let view = getView(route.query.view, route.query.viewType, 'CRM Lead')
+    let view = getView(route.query.view, route.query.viewType, 'CRM Seed')
     if (view) {
       items.push({
         label: __(view.label),
@@ -391,7 +412,7 @@ const breadcrumbs = computed(() => {
 })
 
 const title = computed(() => {
-  let t = doctypeMeta['CRM Lead']?.title_field || 'name'
+  let t = doctypeMeta['CRM Seed']?.title_field || 'name'
   return doc?.[t] || props.leadId
 })
 
@@ -402,13 +423,18 @@ usePageMeta(() => {
 const tabs = computed(() => {
   let tabOptions = [
     {
+      name: 'Data',
+      label: __('About Seed'),
+      icon: DetailsIcon,
+    },
+    {
       name: 'Activity',
       label: __('Activity'),
       icon: ActivityIcon,
     },
     {
-      name: 'Emails',
-      label: __('Emails'),
+      name: 'Email Templates',
+      label: __('Email Templates'),
       icon: EmailIcon,
     },
     {
@@ -416,16 +442,11 @@ const tabs = computed(() => {
       label: __('Comments'),
       icon: CommentIcon,
     },
-    {
-      name: 'Data',
-      label: __('Data'),
-      icon: DetailsIcon,
-    },
-    {
-      name: 'Calls',
-      label: __('Calls'),
-      icon: PhoneIcon,
-    },
+//     {
+//       name: 'Calls',
+//       label: __('Calls'),
+//       icon: PhoneIcon,
+//     },
     {
       name: 'Tasks',
       label: __('Tasks'),
@@ -455,8 +476,8 @@ const { tabIndex, changeTabTo } = useActiveTabManager(tabs, 'lastLeadTab')
 
 const sections = createResource({
   url: 'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_sidepanel_sections',
-  cache: ['sidePanelSections', 'CRM Lead'],
-  params: { doctype: 'CRM Lead' },
+  cache: ['sidePanelSections', 'CRM Seed'],
+  params: { doctype: 'CRM Seed' },
   auto: true,
 })
 

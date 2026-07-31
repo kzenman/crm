@@ -89,6 +89,8 @@ import {
   Dialog,
   DialogOverlay,
 } from '@headlessui/vue'
+import HomeIcon from '@/components/Icons/HomeIcon.vue'
+import SeedlingIcon from '@/components/Icons/SeedlingIcon.vue'
 import Section from '@/components/Section.vue'
 import Email2Icon from '@/components/Icons/Email2Icon.vue'
 import PinIcon from '@/components/Icons/PinIcon.vue'
@@ -102,6 +104,7 @@ import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import NotificationsIcon from '@/components/Icons/NotificationsIcon.vue'
 import SidebarLink from '@/components/SidebarLink.vue'
+import MessageIcon from '@/components/Icons/MessageIcon.vue'
 import { viewsStore } from '@/stores/views'
 import { unreadNotificationsCount } from '@/stores/notifications'
 import { createResource } from 'frappe-ui'
@@ -113,45 +116,56 @@ const { getPinnedViews, getPublicViews } = viewsStore()
 
 const links = [
   {
-    label: 'Leads',
-    icon: LeadsIcon,
+    label: 'Home',
+    icon: HomeIcon,
+    to: 'Dashboard',
+//     condition: () => isManager(),
+  },
+  {
+    label: 'Garden',
+    icon: SeedlingIcon,
     to: 'Leads',
   },
-  {
-    label: 'Deals',
-    icon: DealsIcon,
-    to: 'Deals',
-  },
-  {
-    label: 'Contacts',
-    icon: ContactsIcon,
-    to: 'Contacts',
-  },
+//   {
+//     label: 'Deals',
+//     icon: DealsIcon,
+//     to: 'Deals',
+//   },
+//   {
+//     label: 'Contacts',
+//     icon: ContactsIcon,
+//     to: 'Contacts',
+//   },
   {
     label: 'Organizations',
     icon: OrganizationsIcon,
     to: 'Organizations',
   },
-  {
-    label: 'Notes',
-    icon: NoteIcon,
-    to: 'Notes',
-  },
+  // {
+  //   label: 'Notes',
+  //   icon: NoteIcon,
+  //   to: 'Notes',
+  // },
   {
     label: 'Tasks',
     icon: TaskIcon,
     to: 'Tasks',
   },
   {
-    label: 'Call Logs',
-    icon: PhoneIcon,
-    to: 'Call Logs',
+    label: 'Reports',
+    icon: DealsIcon,
+    to: 'Reports',
   },
   {
-    label: 'Email Templates',
-    icon: Email2Icon,
-    to: 'Email Templates',
+    label: 'Rose Chat',
+    icon: MessageIcon,
+    to: 'Chat',
   },
+//   {
+//     label: 'Email Templates',
+//     icon: Email2Icon,
+//     to: 'Email Templates',
+//   },
 ]
 
 const allViews = computed(() => {

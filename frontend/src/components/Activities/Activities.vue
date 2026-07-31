@@ -21,6 +21,7 @@
       <LoadingIndicator class="h-6 w-6" />
       <span>{{ __('Loading...') }}</span>
     </div>
+    <EmailTemplatesList v-else-if="title == 'Email Templates'" :doc="doc" />
     <div
       v-else-if="
         activities?.length ||
@@ -66,7 +67,7 @@
         </div>
       </div>
       <div v-else-if="title == 'Tasks'" class="px-3 pb-3 sm:px-10 sm:pb-5">
-        <TaskArea :modalRef="modalRef" :tasks="activities" :doctype="doctype" />
+        <TaskArea :modalRef="modalRef" :tasks="activities" :doctype="doctype" :activities="all_activities" />
       </div>
       <div v-else-if="title == 'Calls'" class="activity">
         <div v-for="(call, i) in activities">
@@ -113,13 +114,13 @@
         v-for="(activity, i) in activities"
         class="activity px-3 sm:px-10"
         :class="
-          ['Activity', 'Emails'].includes(title)
+          ['Activity', 'Email Templates'].includes(title)
             ? 'grid grid-cols-[30px_minmax(auto,_1fr)] gap-2 sm:gap-4'
             : ''
         "
       >
         <div
-          v-if="['Activity', 'Emails'].includes(title)"
+          v-if="['Activity', 'Email Templates'].includes(title)"
           class="z-0 relative flex justify-center before:absolute before:left-[50%] before:-z-[1] before:top-0 before:border-l before:border-outline-gray-modals"
           :class="[i != activities.length - 1 ? 'before:h-full' : 'before:h-4']"
         >
@@ -389,11 +390,6 @@
         @click="modalRef.showNote()"
       />
       <Button
-        v-else-if="title == 'Emails'"
-        :label="__('New Email')"
-        @click="emailBox.show = true"
-      />
-      <Button
         v-else-if="title == 'Comments'"
         :label="__('New Comment')"
         @click="emailBox.showComment = true"
@@ -413,7 +409,7 @@
   <div>
     <CommunicationArea
       ref="emailBox"
-      v-if="['Emails', 'Comments', 'Activity'].includes(title)"
+      v-if="['Comments', 'Activity'].includes(title)"
       v-model="doc"
       v-model:reload="reload_email"
       :doctype="doctype"
@@ -455,6 +451,7 @@
 </template>
 <script setup>
 import ActivityHeader from '@/components/Activities/ActivityHeader.vue'
+import EmailTemplatesList from '@/components/Activities/EmailTemplatesList.vue'
 import EmailArea from '@/components/Activities/EmailArea.vue'
 import CommentArea from '@/components/Activities/CommentArea.vue'
 import CallArea from '@/components/Activities/CallArea.vue'
@@ -515,7 +512,7 @@ const { getUser } = usersStore()
 const props = defineProps({
   doctype: {
     type: String,
-    default: 'CRM Lead',
+    default: 'CRM Seed',
   },
   docname: {
     type: String,
@@ -627,7 +624,7 @@ const activities = computed(() => {
   let _activities = []
   if (title.value == 'Activity') {
     _activities = get_activities()
-  } else if (title.value == 'Emails') {
+  } else if (title.value == 'Email Templates') {
     if (!all_activities.data?.versions) return []
     _activities = all_activities.data.versions.filter(
       (activity) => activity.activity_type === 'communication',
@@ -703,7 +700,7 @@ function update_activities_details(activity) {
 
 const emptyText = computed(() => {
   let text = 'No Activities'
-  if (title.value == 'Emails') {
+  if (title.value == 'Email Templates') {
     text = 'No Email Communications'
   } else if (title.value == 'Comments') {
     text = 'No Comments'
@@ -725,7 +722,7 @@ const emptyText = computed(() => {
 
 const emptyTextIcon = computed(() => {
   let icon = ActivityIcon
-  if (title.value == 'Emails') {
+  if (title.value == 'Email Templates') {
     icon = Email2Icon
   } else if (title.value == 'Comments') {
     icon = CommentIcon

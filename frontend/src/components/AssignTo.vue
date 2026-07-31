@@ -41,7 +41,7 @@ const { document } = useDocument(props.doctype, props.docname)
 const assignees = defineModel()
 
 const ownerField = computed(() => {
-  if (props.doctype === 'CRM Lead') {
+  if (props.doctype === 'CRM Seed') {
     return 'lead_owner'
   } else if (props.doctype === 'CRM Deal') {
     return 'deal_owner'
@@ -50,6 +50,7 @@ const ownerField = computed(() => {
   }
 })
 
+  
 async function saveAssignees(
   addedAssignees,
   removedAssignees,
@@ -65,6 +66,7 @@ async function saveAssignees(
 
   let owner = ownerField.value.replace('_', ' ')
 
+console.log('Assign TO:', addAssignees, owner);
   if (
     document.doc[ownerField.value] &&
     removedAssignees.includes(document.doc[ownerField.value])
@@ -89,6 +91,8 @@ async function saveAssignees(
     }
   } else if (!document.doc[ownerField.value] && nextAssignee) {
     document.doc[ownerField.value] = nextAssignee ? nextAssignee.name : ''
+    
+console.log('new assignee:', nextAssignee, document.doc[ownerField.value]);
     toast.info(
       __('Since you added a new assignee, the {0} has been set to {1}.', [
         owner,

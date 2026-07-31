@@ -20,6 +20,7 @@
     v-model:resizeColumn="triggerResize"
     v-model:updatedPageCount="updatedPageCount"
     doctype="CRM Task"
+    :filters="{ assigned_to: user }"
     :options="{
       allowedViews: ['list', 'kanban'],
     }"
@@ -209,14 +210,16 @@ import KanbanView from '@/components/Kanban/KanbanView.vue'
 import TaskModal from '@/components/Modals/TaskModal.vue'
 import { getMeta } from '@/stores/meta'
 import { usersStore } from '@/stores/users'
+import { sessionStore } from '@/stores/session'
 import { formatDate, timeAgo } from '@/utils'
-import { Tooltip, Avatar, TextEditor, Dropdown, call } from 'frappe-ui'
-import { computed, ref, watch } from 'vue'
+import { Tooltip, Avatar, TextEditor, Dropdown, call, Checkbox } from 'frappe-ui'
+import { computed, ref, watch, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 
 const { getFormattedPercent, getFormattedFloat, getFormattedCurrency } =
   getMeta('CRM Task')
 const { getUser } = usersStore()
+const { user } = sessionStore()
 
 const router = useRouter()
 
@@ -228,6 +231,14 @@ const loadMore = ref(1)
 const triggerResize = ref(1)
 const updatedPageCount = ref(20)
 const viewControls = ref(null)
+
+
+const doc = reactive({
+  repeat: 0,
+  repeat_sel: ''
+})
+
+const repeatOptions = ref([])
 
 function getRow(name, field) {
   function getValue(value) {
@@ -261,14 +272,20 @@ function getKanbanRows(data, columns) {
 }
 
 function parseRows(rows, columns = []) {
+  console.log('parseRows called with:', { rows, columns })
+  
   let view_type = tasks.value.data.view_type
   let key = view_type === 'kanban' ? 'fieldname' : 'key'
   let type = view_type === 'kanban' ? 'fieldtype' : 'type'
 
-  return rows.map((task) => {
+  const result = rows.map((task, index) => {
+    console.log(`Processing task ${index}:`, task)
     let _rows = {}
+    
+    // First, copy all task data to _rows
     tasks.value?.data.rows.forEach((row) => {
       _rows[row] = task[row]
+      console.log(`Set _rows[${row}] = ${task[row]}`)
 
       let fieldType = columns?.find((col) => (col[key] || col.value) == row)?.[
         type
@@ -300,14 +317,30 @@ function parseRows(rows, columns = []) {
           timeAgo: __(timeAgo(task[row])),
         }
       } else if (row == 'assigned_to') {
+        let assignedUser = task.assigned_to && getUser(task.assigned_to)
         _rows[row] = {
-          label: task.assigned_to && getUser(task.assigned_to).full_name,
-          ...(task.assigned_to && getUser(task.assigned_to)),
+          label: assignedUser?.full_name,
+          ...(assignedUser || {}),
         }
       }
     })
+    
+    // Then handle column-specific processing
+    columns.forEach((col) => {
+      // Special case: handle dynamic Select options for repeat_sel
+      if (col.fieldtype === "Select" && col.fieldname === "repeat_sel") {
+        _rows.repeat_sel_options = (col.options || "")
+          .split("\n")
+          .filter(Boolean)
+      }
+    })
+    
+    console.log(`Final _rows for task ${index}:`, _rows)
     return _rows
   })
+  
+  console.log('parseRows result:', result)
+  return result
 }
 
 const showTaskModal = ref(false)
@@ -318,25 +351,70 @@ const task = ref({
   description: '',
   assigned_to: '',
   due_date: '',
-  status: 'Backlog',
+  status: 'Seed Gathering',
   priority: 'Low',
-  reference_doctype: 'CRM Lead',
+  reference_doctype: 'CRM Seed',
   reference_docname: '',
+  seed: '',
+  repeat: '',
+  repeat_sel: '',
+  completed: 0
 })
 
 function showTask(name) {
+  console.log('showTask called with name:', name)
+  console.log('rows.value:', rows.value)
+  
   let t = rows.value?.find((row) => row.name === name)
+  if (!t) {
+    console.error('Task not found:', name, 'Available rows:', rows.value)
+    return
+  }
+  
+  console.log('showTask - found task:', t)
+  console.log('Task properties:', Object.keys(t))
+  
+  // Log each field individually to debug
+  Object.keys(t).forEach(key => {
+    console.log(`Field ${key}:`, t[key], typeof t[key])
+  })
+  
+  // Extract actual values, handling both direct values and object structures
+  const getFieldValue = (field) => {
+    const value = t[field]
+    console.log(`Getting field ${field}:`, value)
+    if (value && typeof value === 'object' && 'label' in value) {
+      console.log(`${field} has label:`, value.label)
+      return value.label
+    }
+    return value
+  }
+  
+  const getAssignedTo = () => {
+    const assigned = t.assigned_to
+    console.log('Getting assigned_to:', assigned)
+    if (assigned && typeof assigned === 'object') {
+      return assigned.email || assigned.name || ''
+    }
+    return assigned || ''
+  }
+  
   task.value = {
     name: t.name,
-    title: t.title,
-    description: t.description,
-    assigned_to: t.assigned_to?.email || '',
-    due_date: t.due_date,
-    status: t.status,
-    priority: t.priority,
-    reference_doctype: t.reference_doctype,
-    reference_docname: t.reference_docname,
+    title: getFieldValue('title'),
+    description: getFieldValue('description'),
+    assigned_to: getAssignedTo(),
+    due_date: getFieldValue('due_date'),
+    status: getFieldValue('status'),
+    priority: getFieldValue('priority'),
+    reference_doctype: getFieldValue('reference_doctype'),
+    reference_docname: getFieldValue('reference_docname'),
+    seed: getFieldValue('seed') || '',
+    repeat: getFieldValue('repeat') || 0,
+    repeat_sel: getFieldValue('repeat_sel') || ''
   }
+  
+  console.log('showTask - final task.value:', task.value)
   showTaskModal.value = true
 }
 
@@ -347,10 +425,13 @@ function createTask(column) {
     description: '',
     assigned_to: '',
     due_date: '',
-    status: 'Backlog',
+    status: 'Seed Gathering',
     priority: 'Low',
-    reference_doctype: 'CRM Lead',
+    reference_doctype: 'CRM Seed',
     reference_docname: '',
+    repeat: '',
+    repeat_sel: '',
+    completed: 0
   }
 
   if (column.column?.name) {

@@ -95,17 +95,31 @@ onMounted(() => {
 })
 
 function getRoute(notification) {
-  let params = {
-    leadId: notification.reference_name,
+  // Handle missing or empty reference_name
+  if (!notification.reference_name) {
+    return { name: 'Leads' }
   }
+
+  // Handle different route types
   if (notification.route_name === 'Deal') {
-    params = {
-      dealId: notification.reference_name,
+    return {
+      name: 'Deal',
+      params: { dealId: notification.reference_name },
+      hash: '#' + notification.comment || notification.notification_type_doc,
     }
   }
+  
+  if (notification.route_name === 'Lead') {
+    return {
+      name: 'Lead',
+      params: { leadId: notification.reference_name },
+      hash: '#' + notification.comment || notification.notification_type_doc,
+    }
+  }
+
+  // Fallback for any other route that doesn't require params
   return {
-    name: notification.route_name,
-    params: params,
+    name: notification.route_name || 'Leads',
     hash: '#' + notification.comment || notification.notification_type_doc,
   }
 }

@@ -6,6 +6,7 @@
     <div class="flex-1 flex flex-col h-full overflow-auto bg-surface-white">
       <AppHeader />
       <slot />
+      <!-- <BottomNav /> Add this line -->
     </div>
     <GlobalModals />
   </div>
@@ -14,4 +15,5 @@
 import AppSidebar from '@/components/Layouts/AppSidebar.vue'
 import AppHeader from '@/components/Layouts/AppHeader.vue'
 import GlobalModals from '@/components/Modals/GlobalModals.vue'
+// import BottomNav from '@/components/BottomNav.vue' // Import here
 </script>

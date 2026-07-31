@@ -9,9 +9,7 @@
       doctype="User"
       @change="(option) => addValue(option) && ($refs.input.value = '')"
       :placeholder="__('John Doe')"
-      :filters="{
-        name: ['in', users.data.crmUsers?.map((user) => user.name)],
-      }"
+
       :hideMe="true"
     >
       <template #target="{ togglePopover }">
@@ -52,7 +50,7 @@
       <template #item-label="{ option }">
         <Tooltip :text="option.value">
           <div class="cursor-pointer text-ink-gray-9">
-            {{ getUser(option.value).full_name }}
+            {{ option.label || getUser(option.value)?.full_name || option.value }}
           </div>
         </Tooltip>
       </template>
@@ -106,6 +104,9 @@ const error = ref('')
 
 const { users, getUser } = usersStore()
 
+
+console.log('AssignToBody', users);
+
 const removeValue = (value) => {
   if (value === getUser('').name) {
     assignToMe.value = false
@@ -154,6 +155,15 @@ watch(
       updateAssignees()
     }
   },
+)
+  
+  // 👇 Add this watcher to log everything in v-model
+watch(
+  () => props.modelValue,
+  (val) => {
+    console.log("Assignees (v-model):", val)
+  },
+  { deep: true }
 )
 
 async function updateAssignees() {

@@ -56,7 +56,7 @@ const props = defineProps({
   },
   doctype: {
     type: String,
-    default: 'CRM Lead',
+    default: 'CRM Seed',
   },
 })
 
@@ -66,6 +66,7 @@ watch(
   () => props.rows,
   (val) => (reactivieRows.value = val),
 )
+// console.log('69 rows list', props.rows, 'reactivieRows', reactivieRows);
 
 let showGroupedRows = computed(() => {
   return props.rows.every(

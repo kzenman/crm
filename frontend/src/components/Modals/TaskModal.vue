@@ -56,7 +56,7 @@
             :content="_task.description"
             @change="(val) => (_task.description = val)"
             :placeholder="
-              __('Took a call with John Doe and discussed the new project.')
+              __('Call John Doe and discussed the new project.')
             "
           />
         </div>
@@ -68,29 +68,55 @@
               </template>
             </Button>
           </Dropdown>
+        
           <Link
             class="form-control"
-            :value="getUser(_task.assigned_to).full_name"
-            doctype="User"
-            @change="(option) => (_task.assigned_to = option)"
+            v-model="_task.assigned_to"
+            doctype="Employee"
+            :filters="{ status: 'Active' }"
             :placeholder="__('John Doe')"
-            :filters="{
-              name: ['in', users.data.crmUsers?.map((user) => user.name)],
-            }"
-            :hideMe="true"
           >
-            <template #prefix>
-              <UserAvatar class="mr-2 !h-4 !w-4" :user="_task.assigned_to" />
+            <template #target="{ open, togglePopover }">
+              <button
+                class="form-control flex w-full items-center justify-between rounded border border-gray-300 bg-white px-2 py-1.5 text-sm transition-colors hover:border-gray-400 focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+                @click="togglePopover()"
+              >
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                  <FeatherIcon name="user" class="h-4 w-4 text-gray-500 flex-shrink-0" />
+                  <span class="truncate">
+                    {{ getEmployee(_task.assigned_to).employee_name || __('John Doe') }}
+                  </span>
+                </div>
+                <FeatherIcon 
+                  :name="open ? 'chevron-up' : 'chevron-down'" 
+                  class="h-4 w-4 text-gray-500 flex-shrink-0" 
+                />
+              </button>
             </template>
             <template #item-prefix="{ option }">
-              <UserAvatar class="mr-2" :user="option.value" size="sm" />
+              <FeatherIcon name="user" class="mr-2 h-4 w-4" />
             </template>
             <template #item-label="{ option }">
-              <Tooltip :text="option.value">
-                <div class="cursor-pointer text-ink-gray-9">
-                  {{ getUser(option.value).full_name }}
+              <div class="flex flex-col gap-1">
+                <div class="flex-1 font-semibold truncate text-ink-gray-7">
+                  {{ option.description || option.label }}
                 </div>
-              </Tooltip>
+                <div class="flex-1 text-sm truncate text-ink-gray-5">
+                  {{ option.value }}
+                </div>
+              </div>
+            </template>
+          </Link>
+<!--           new dropdow -->
+
+          <Link
+            class="form-control flex-1 min-w-[200px]"
+            v-model="_task.seed"
+            doctype="CRM Seed"
+            :placeholder="__('Select Seed')"
+          >
+            <template #prefix>
+              <FeatherIcon name="target" class="mr-2 h-4 w-4" />
             </template>
           </Link>
           <DateTimePicker
@@ -107,6 +133,21 @@
               </template>
             </Button>
           </Dropdown>
+          <div class="mb-1.5 text-xs text-ink-gray-5">
+            {{ __('Repeat') }}
+          </div>
+          <Checkbox v-model="repeatChecked" id="repeat-checkbox" >
+            <template #label>
+              <span>Repeat</span>
+            </template>
+          </Checkbox>
+          <Dropdown :options="taskRepeatOptions(updateTaskWeeks)" v-if="repeatChecked" v-model="_task.repeat_sel">
+            <Button :label="_task.repeat_sel" class="justify-between w-24">
+              <template #prefix>
+                <TaskPriorityIcon :repeat_sel="_task.repeat_sel" />
+              </template>
+            </Button>
+          </Dropdown>
         </div>
         <ErrorMessage class="mt-4" v-if="error" :message="__(error)" />
       </div>
@@ -120,13 +161,32 @@ import TaskPriorityIcon from '@/components/Icons/TaskPriorityIcon.vue'
 import ArrowUpRightIcon from '@/components/Icons/ArrowUpRightIcon.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import Link from '@/components/Controls/Link.vue'
-import { taskStatusOptions, taskPriorityOptions, getFormat } from '@/utils'
+import { taskStatusOptions, taskPriorityOptions, taskRepeatOptions, getFormat } from '@/utils'
 import { usersStore } from '@/stores/users'
 import { capture } from '@/telemetry'
-import { TextEditor, Dropdown, Tooltip, call, DateTimePicker } from 'frappe-ui'
+import { TextEditor, Dropdown, Tooltip, call, DateTimePicker, Checkbox, FeatherIcon, createResource, Autocomplete } from 'frappe-ui'
 import { useOnboarding } from 'frappe-ui/frappe'
-import { ref, watch, nextTick, onMounted } from 'vue'
+import { ref, watch, nextTick, onMounted, computed } from 'vue'
+
+function deepClone(obj) {
+  return JSON.parse(JSON.stringify(obj))
+}
 import { useRouter } from 'vue-router'
+  
+const repeatChecked = computed({
+  get() {
+    return _task.value.repeat === 1 || _task.value.repeat === '1' || _task.value.repeat === true;
+  },
+  set(val) {
+    _task.value.repeat = val ? 1 : 0;
+    if (val && !_task.value.repeat_sel) {
+      _task.value.repeat_sel = '1 week';
+    }
+    if (!val) {
+      _task.value.repeat_sel = '';
+    }
+  }
+});
 
 const props = defineProps({
   task: {
@@ -135,7 +195,7 @@ const props = defineProps({
   },
   doctype: {
     type: String,
-    default: 'CRM Lead',
+    default: 'CRM Seed',
   },
   doc: {
     type: String,
@@ -149,22 +209,74 @@ const tasks = defineModel('reloadTasks')
 const emit = defineEmits(['updateTask', 'after'])
 
 const router = useRouter()
-const { users, getUser } = usersStore()
+const { users, employees, getUser, getCompanyUsers } = usersStore()
 const { updateOnboardingStep } = useOnboarding('frappecrm')
 
 const error = ref(null)
 const title = ref(null)
 const editMode = ref(false)
-const _task = ref({
+
+// Function to get employee data by employee name (e.g., HR-EMP-00003)
+function getEmployee(employeeName) {
+  if (!employeeName) {
+    return { employee_name: '', name: '', user_id: null }
+  }
+  // Check if employees.data exists and has the employee
+  const emp = employees.data?.find(e => e.name === employeeName)
+  if (emp) {
+    return emp
+  }
+  // Fallback if employee not found
+  return { employee_name: employeeName, name: employeeName, user_id: null }
+}
+
+
+// Computed property to get company users as options for Autocomplete
+const currentCompany = computed(() => getUser().company);
+  
+const companyUserOptions = computed(() => {
+
+    return getCompanyUsers().map(user => ({
+      label: user.full_name || user.email,
+      value: user.email,
+      designation: user.designation,
+      email: user.email,
+      user_image: user.user_image,
+    }));
+
+})
+
+// console.log('[getCompanyUsers] render ', getCompanyUsers(), 'AND ', companyUserOptions.value);
+
+// Get selected user option for display
+const selectedUserOption = computed(() => {
+  if (!_task.value.assigned_to) return null
+  const user = getUser(_task.value.assigned_to)
+  return {
+    label: user.full_name || _task.value.assigned_to,
+    value: _task.value.assigned_to,
+    user_image: user.user_image,
+  }
+})
+
+// Define the default structure for a new task
+const defaultTask = {
   title: '',
   description: '',
   assigned_to: '',
   due_date: '',
-  status: 'Backlog',
+  status: 'Seed Gathering',
   priority: 'Low',
+  crm_lead_status: null,
   reference_doctype: props.doctype,
   reference_docname: null,
-})
+  seed: '',
+  repeat: 0,
+  repeat_sel: '',
+  completed: 0
+};
+
+const _task = ref({ ...defaultTask });
 
 function updateTaskStatus(status) {
   _task.value.status = status
@@ -172,6 +284,10 @@ function updateTaskStatus(status) {
 
 function updateTaskPriority(priority) {
   _task.value.priority = priority
+}
+
+function updateTaskWeeks(weeks) {
+  _task.value.repeat_sel = weeks
 }
 
 function redirect() {
@@ -183,56 +299,122 @@ function redirect() {
   }
   router.push({ name: name, params: params })
 }
+  
 
 async function updateTask() {
-  if (!_task.value.assigned_to) {
-    _task.value.assigned_to = getUser().name
-  }
-  if (_task.value.name) {
-    let d = await call('frappe.client.set_value', {
-      doctype: 'CRM Task',
-      name: _task.value.name,
-      fieldname: _task.value,
-    })
-    if (d.name) {
-      tasks.value?.reload()
-      emit('after', d)
+  console.log('updateTask', _task.value);
+  try {
+    // Get the user_id (email) from the selected employee
+    let assignedToUser = _task.value.assigned_to
+    if (_task.value.assigned_to && _task.value.assigned_to.startsWith('HR-EMP-')) {
+      // It's an Employee ID, convert to user email
+      const emp = getEmployee(_task.value.assigned_to)
+      assignedToUser = emp.user_id || getUser().name
+    } else if (!assignedToUser) {
+      assignedToUser = getUser().name
     }
-  } else {
-    let d = await call(
-      'frappe.client.insert',
-      {
-        doc: {
+    
+    const result = _task.value.name 
+      ? await call('frappe.client.set_value', {
           doctype: 'CRM Task',
-          reference_doctype: props.doctype,
-          reference_docname: props.doc || null,
-          ..._task.value,
-        },
-      },
-      {
-        onError: (err) => {
-          if (err.error.exc_type == 'MandatoryError') {
-            error.value = 'Title is mandatory'
-          }
-        },
-      },
-    )
-    if (d.name) {
-      updateOnboardingStep('create_first_task')
-      capture('task_created')
+          name: _task.value.name,
+          fieldname: {
+            title: _task.value.title,
+            description: _task.value.description,
+            assigned_to: assignedToUser,
+            due_date: _task.value.due_date,
+            status: _task.value.status,
+            priority: _task.value.priority,
+            seed: _task.value.seed,
+            repeat: _task.value.repeat,
+            repeat_sel: _task.value.repeat_sel,
+            completed: _task.value.completed,
+          },
+        })
+      : await call('frappe.client.insert', {
+          doc: {
+            doctype: 'CRM Task',
+            reference_doctype: props.doctype,
+            reference_docname: props.doc || null,
+            completed: 0,
+            ..._task.value,
+            assigned_to: assignedToUser,
+          },
+        })
+
+    if (result.name) {
+      if (!_task.value.name) {
+        // updateOnboardingStep('create_first_task')
+        capture('task_created')
+        emit('after', result, true)
+      } else {
+        emit('after', result)
+      }
       tasks.value?.reload()
-      emit('after', d, true)
     }
+  } catch (err) {
+    if (err.error?.exc_type === 'MandatoryError') {
+      error.value = 'Title is mandatory'
+    }
+    console.error('Error in updateTask:', err)
+    return
   }
   show.value = false
 }
 
 function render() {
+  // console.log('TaskModal render() called with props.task:', props.task)
   editMode.value = false
+  
+  // Force fetch employees if not loaded
+  if (!employees.fetched) {
+    // console.log('[TASKMODAL] render - forcing employees.fetch()')
+    employees.fetch()
+  }
+  
   nextTick(() => {
     title.value?.el?.focus?.()
-    _task.value = { ...props.task }
-    if (_task.value.title) {
+    
+    // Simple assignment without deep cloning
+    if (props.task && Object.keys(props.task).length > 0) {
+      // console.log('TaskModal render - copying props.task to _task')
+      _task.value = { ...defaultTask, ...props.task }
+      
+      // Convert User email back to Employee ID for display
+      if (_task.value.assigned_to && !_task.value.assigned_to.startsWith('HR-EMP-')) {
+        // It's a User email, find the corresponding Employee ID
+        const emp = employees.data?.find(e => e.user_id === _task.value.assigned_to)
+        if (emp) {
+          _task.value.assigned_to = emp.name
+        }
+      }
+    } else {
+      // console.log('TaskModal render - using defaultTask')
+      _task.value = { ...defaultTask }
+      // Pre-fill seed with the current seed/lead/doc if available
+      if (props.doc && (props.doctype === 'CRM Seed' || props.doctype === 'CRM Lead')) {
+        _task.value.seed = props.doc
+      }
+    }
+
+    // Force repeatChecked sync
+    repeatChecked.value =
+      _task.value.repeat === 1 ||
+      _task.value.repeat === '1' ||
+      _task.value.repeat === true
+
+    // console.log('TaskModal render - final _task:', _task.value)
+
+    // If repeat is checked and repeat_sel is empty, set default
+    if (repeatChecked.value && !_task.value.repeat_sel) {
+      _task.value.repeat_sel = '1 week'
+    }
+    // If repeat is not checked, clear repeat_sel
+    if (!repeatChecked.value) {
+      _task.value.repeat_sel = ''
+    }
+
+    if (_task.value.name) {
       editMode.value = true
     }
   })
@@ -240,10 +422,44 @@ function render() {
 
 onMounted(() => show.value && render())
 
+// Watch for modal open
 watch(show, (value) => {
   if (!value) return
   render()
 })
+
+// Watch for task prop change (when editing a different task)
+watch(
+  () => props.task,
+  (newTask) => {
+    // console.log('TaskModal - task prop changed:', newTask)
+    if (newTask && Object.keys(newTask).length > 0) {
+      // console.log('TaskModal - updating _task with:', newTask)
+      _task.value = { ...defaultTask, ...newTask }
+      
+      // Convert User email back to Employee ID for display
+      if (_task.value.assigned_to && !_task.value.assigned_to.startsWith('HR-EMP-')) {
+        // It's a User email, find the corresponding Employee ID
+        const emp = employees.data?.find(e => e.user_id === _task.value.assigned_to)
+        if (emp) {
+          _task.value.assigned_to = emp.name
+        }
+      }
+      
+      // Update edit mode based on whether task has a name
+      editMode.value = !!newTask.name
+      
+      // Update repeat checkbox
+      repeatChecked.value =
+        newTask.repeat === 1 ||
+        newTask.repeat === '1' ||
+        newTask.repeat === true
+        
+      // console.log('TaskModal - _task after update:', _task.value) 
+    }
+  },
+  { deep: true, immediate: true }
+)
 </script>
 
 <style scoped>

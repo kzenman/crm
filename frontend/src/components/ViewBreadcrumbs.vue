@@ -9,7 +9,7 @@
           : 'text-ink-gray-7',
       ]"
     >
-      {{ __(routeName) }}
+      {{ __(routeName === 'Leads' ? 'Seeds' : routeName) }}
     </router-link>
     <span
       v-if="viewControls"

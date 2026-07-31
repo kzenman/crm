@@ -404,7 +404,11 @@ usePageMeta(() => {
   let label = currentView.value.label
   if (currentView.value.is_standard) {
     let routeName = route.name
-    label = `${routeName} - ${label}`
+    if (routeName === 'Leads') {
+      label = `Seeds - ${label}`
+    } else {
+      label = `${routeName} - ${label}`
+    }
   }
   return {
     title: label,

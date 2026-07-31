@@ -5,7 +5,7 @@
         <div class="mb-5 flex items-center justify-between">
           <div>
             <h3 class="text-2xl font-semibold leading-6 text-ink-gray-9">
-              {{ __('Create Lead') }}
+              {{ __('Enter New Seed') }}
             </h3>
           </div>
           <div class="flex items-center gap-1">
@@ -35,7 +35,7 @@
         <div class="flex flex-row-reverse gap-2">
           <Button
             variant="solid"
-            :label="__('Create')"
+            :label="__('Create Seed')"
             :loading="isLeadCreating"
             @click="createNewLead"
           />
@@ -74,26 +74,34 @@ const router = useRouter()
 const error = ref(null)
 const isLeadCreating = ref(false)
 
-const { document: lead, triggerOnBeforeCreate } = useDocument('CRM Lead')
+const { document: lead, triggerOnBeforeCreate } = useDocument('CRM Seed')
 
 const leadStatuses = computed(() => {
   let statuses = statusOptions('lead')
-  if (!lead.doc.status) {
-    lead.doc.status = statuses?.[0]?.value
-  }
+    if (!lead.doc.status) {
+      lead.doc.status = statuses?.[0]?.value
+    }
+    if (lead.doc.status === 'Plotting the Garden') {
+      lead.doc.status = statuses?.[1]?.value
+    }
+    console.log('60 lead.doc.status', lead.doc.status, 'statuses', statuses)
   return statuses
 })
 
 const tabs = createResource({
   url: 'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout',
-  cache: ['QuickEntry', 'CRM Lead'],
-  params: { doctype: 'CRM Lead', type: 'Quick Entry' },
+  cache: ['QuickEntry', 'CRM Seed'],
+  params: { doctype: 'CRM Seed', type: 'Quick Entry' },
   auto: true,
   transform: (_tabs) => {
     return _tabs.forEach((tab) => {
+//       console.log('94 tab', tab);
       tab.sections.forEach((section) => {
+//       console.log('96 section', section);
         section.columns.forEach((column) => {
+//       console.log('98 column', column);
           column.fields.forEach((field) => {
+//                 console.log('100 field', field);
             if (field.fieldname == 'status') {
               field.fieldtype = 'Select'
               field.options = leadStatuses.value
@@ -124,7 +132,7 @@ async function createNewLead() {
   createLead.submit(
     {
       doc: {
-        doctype: 'CRM Lead',
+        doctype: 'CRM Seed',
         ...lead.doc,
       },
     },
@@ -183,12 +191,13 @@ async function createNewLead() {
 
 function openQuickEntryModal() {
   showQuickEntryModal.value = true
-  quickEntryProps.value = { doctype: 'CRM Lead' }
+  quickEntryProps.value = { doctype: 'CRM Seed' }
   nextTick(() => (show.value = false))
 }
 
 onMounted(() => {
   lead.doc = { no_of_employees: '1-10' }
+//   console.log('props', props.defaults, 'lead', lead);
   Object.assign(lead.doc, props.defaults)
 
   if (!lead.doc?.lead_owner) {

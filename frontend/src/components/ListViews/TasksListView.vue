@@ -3,10 +3,11 @@
     :columns="columns"
     :rows="rows"
     :options="{
-      onRowClick: (row) => emit('showTask', row.name),
+      onRowClick: (row) => !row.completed && emit('showTask', row.name),
       selectable: options.selectable,
       showTooltip: options.showTooltip,
       resizeColumn: options.resizeColumn,
+      getRowClass: (row) => row.completed === 1 ? 'opacity-60' : '',
     }"
     row-key="name"
     @update:selections="(selections) => emit('selectionsChanged', selections)"
@@ -35,7 +36,7 @@
     <ListRows
       class="mx-3 sm:mx-5"
       :rows="rows"
-      v-slot="{ idx, column, item }"
+      v-slot="{ idx, column, item, row }"
       doctype="CRM Task"
     >
       <div v-if="column.key === 'due_date'">
@@ -90,11 +91,11 @@
             v-html="item"
             class="truncate text-base h-4 [&>p]:truncate"
           />
-          <div v-else-if="column.type === 'Check'">
+          <div v-else-if="column.type === 'Check'" @click.stop>
             <FormControl
               type="checkbox"
               :modelValue="item"
-              :disabled="true"
+              @update:modelValue="(val) => updateCheckField(row.name, column.key, val)"
               class="text-ink-gray-9"
             />
           </div>
@@ -112,7 +113,10 @@
           </div>
           <div
             v-else
-            class="truncate text-base"
+            :class="[
+              'truncate text-base',
+              column.key === 'title' && row?.completed === 1 ? 'line-through' : ''
+            ]"
             @click="
               (event) =>
                 emit('applyFilter', {
@@ -175,6 +179,7 @@ import {
   ListFooter,
   Dropdown,
   Tooltip,
+  call,
 } from 'frappe-ui'
 import { sessionStore } from '@/stores/session'
 import { ref, computed, watch } from 'vue'
@@ -225,6 +230,16 @@ function isLiked(item) {
     let likedByMe = JSON.parse(item)
     return likedByMe.includes(user)
   }
+}
+
+async function updateCheckField(docName, fieldName, value) {
+  await call('frappe.client.set_value', {
+    doctype: 'CRM Task',
+    name: docName,
+    fieldname: fieldName,
+    value: value ? 1 : 0,
+  })
+  list.value.reload()
 }
 
 watch(pageLengthCount, (val, old_value) => {

@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-5 justify-center items-center h-full">
     <div class="font-semibold text-2xl text-ink-gray-8 mb-3">
-      {{ __('Welcome {0}, lets add your first lead', [name]) }}
+      {{ __('Welcome {0}, lets add your first seed', [name]) }}
     </div>
     <div class="flex gap-3">
       <div
@@ -18,7 +18,7 @@
             </div>
           </div>
           <div class="text-p-base text-ink-gray-8 text-center">
-            {{ __('Start with sample 10 leads') }}
+            {{ __('Start with sample 10 seeds') }}
           </div>
         </div>
         <Button variant="outline" :label="__('Add sample data')" />

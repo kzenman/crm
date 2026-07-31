@@ -1,4 +1,5 @@
 <template>
+ 
   <div
     class="relative flex h-full flex-col justify-between transition-all duration-300 ease-in-out"
     :class="isSidebarCollapsed ? 'w-12' : 'w-[220px]'"
@@ -25,15 +26,12 @@
             <div
               v-else-if="unreadNotificationsCount"
               class="absolute -left-1.5 top-1 z-20 h-[5px] w-[5px] translate-x-6 translate-y-1 rounded-full bg-surface-gray-6 ring-1 ring-white"
-            />
+            ></div>
           </template>
         </SidebarLink>
       </div>
       <div v-for="view in allViews" :key="view.label">
-        <div
-          v-if="!view.hideLabel && isSidebarCollapsed && view.views?.length"
-          class="mx-2 my-2 h-1 border-b"
-        />
+        <div v-if="!view.hideLabel && isSidebarCollapsed && view.views?.length" class="mx-2 my-2 h-1 border-b"></div>
         <Section
           :label="view.name"
           :hideLabel="view.hideLabel"
@@ -83,12 +81,12 @@
           :isSidebarCollapsed="isSidebarCollapsed"
           :afterUpgrade="() => capture('upgrade_plan_from_trial_banner')"
         />
-        <GettingStartedBanner
+<!--         <GettingStartedBanner
           v-if="!isOnboardingStepsCompleted"
           :isSidebarCollapsed="isSidebarCollapsed"
-        />
+        /> -->
       </div>
-      <SidebarLink
+<!--       <SidebarLink
         v-if="isOnboardingStepsCompleted"
         :label="__('Help')"
         :isCollapsed="isSidebarCollapsed"
@@ -102,7 +100,7 @@
         <template #icon>
           <HelpIcon class="h-4 w-4" />
         </template>
-      </SidebarLink>
+      </SidebarLink> -->
       <SidebarLink
         :label="isSidebarCollapsed ? __('Expand') : __('Collapse')"
         :isCollapsed="isSidebarCollapsed"
@@ -121,7 +119,7 @@
     </div>
     <Notifications />
     <Settings />
-    <HelpModal
+<!--     <HelpModal
       v-if="showHelpModal"
       v-model="showHelpModal"
       v-model:articles="articles"
@@ -135,12 +133,13 @@
     <IntermediateStepModal
       v-model="showIntermediateModal"
       :currentStep="currentStep"
-    />
+    /> -->
   </div>
 </template>
 
 <script setup>
-import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
+import HomeIcon from '@/components/Icons/HomeIcon.vue'
+import SeedlingIcon from '@/components/Icons/SeedlingIcon.vue'
 import CRMLogo from '@/components/Icons/CRMLogo.vue'
 import InviteIcon from '@/components/Icons/InviteIcon.vue'
 import ConvertIcon from '@/components/Icons/ConvertIcon.vue'
@@ -161,6 +160,7 @@ import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import CollapseSidebar from '@/components/Icons/CollapseSidebar.vue'
 import NotificationsIcon from '@/components/Icons/NotificationsIcon.vue'
 import HelpIcon from '@/components/Icons/HelpIcon.vue'
+import MessageIcon from '@/components/Icons/MessageIcon.vue'
 import SidebarLink from '@/components/SidebarLink.vue'
 import Notifications from '@/components/Notifications.vue'
 import Settings from '@/components/Settings/Settings.vue'
@@ -200,45 +200,50 @@ const isDemoSite = ref(window.is_demo_site)
 const allViews = computed(() => {
   const links = [
     {
-      label: 'Dashboard',
-      icon: LucideLayoutDashboard,
+      label: 'Home',
+      icon: HomeIcon,
       to: 'Dashboard',
-      condition: () => isManager(),
+//       condition: () => isManager(),
     },
     {
-      label: 'Leads',
-      icon: LeadsIcon,
+      label: 'Garden',
+      icon: SeedlingIcon,
       to: 'Leads',
     },
-    {
-      label: 'Deals',
-      icon: DealsIcon,
-      to: 'Deals',
-    },
-    {
-      label: 'Contacts',
-      icon: ContactsIcon,
-      to: 'Contacts',
-    },
+//     {
+//       label: 'Deals',
+//       icon: DealsIcon,
+//       to: 'Deals',
+//     },
+//     {
+//       label: 'Contacts',
+//       icon: ContactsIcon,
+//       to: 'Contacts',
+//     },
     {
       label: 'Organizations',
       icon: OrganizationsIcon,
       to: 'Organizations',
     },
-    {
-      label: 'Notes',
-      icon: NoteIcon,
-      to: 'Notes',
-    },
+//     {
+//       label: 'Notes',
+//       icon: NoteIcon,
+//       to: 'Notes',
+//     },
     {
       label: 'Tasks',
       icon: TaskIcon,
       to: 'Tasks',
     },
     {
-      label: 'Call Logs',
-      icon: PhoneIcon,
-      to: 'Call Logs',
+      label: 'Reports',
+      icon: DealsIcon,
+      to: 'Reports',
+    },
+    {
+      label: 'Rose Chat',
+      icon: MessageIcon,
+      to: 'Chat',
     },
   ]
 
@@ -293,8 +298,8 @@ function getIcon(routeName, icon) {
   switch (routeName) {
     case 'Leads':
       return LeadsIcon
-    case 'Deals':
-      return DealsIcon
+//     case 'Deals':
+//       return DealsIcon
     case 'Contacts':
       return ContactsIcon
     case 'Organizations':
@@ -303,6 +308,8 @@ function getIcon(routeName, icon) {
       return NoteIcon
     case 'Call Logs':
       return PhoneIcon
+    case 'Reports':
+      return DealsIcon
     default:
       return PinIcon
   }
@@ -341,7 +348,7 @@ const steps = reactive([
   },
   {
     name: 'create_first_lead',
-    title: __('Create your first lead'),
+    title: __('Create your first seed'),
     icon: markRaw(LeadsIcon),
     completed: false,
     onClick: () => {
@@ -363,7 +370,7 @@ const steps = reactive([
   },
   {
     name: 'convert_lead_to_deal',
-    title: __('Convert lead to deal'),
+    title: __('Convert seed to deal'),
     icon: markRaw(ConvertIcon),
     completed: false,
     dependsOn: 'create_first_lead',
@@ -371,7 +378,7 @@ const steps = reactive([
       minimize.value = true
 
       currentStep.value = {
-        title: __('Convert lead to deal'),
+        title: __('Convert seed to deal'),
         buttonLabel: __('Convert'),
         videoURL: '/assets/crm/videos/convertToDeal.mov',
         onClick: async () => {
@@ -553,7 +560,7 @@ const articles = ref([
     ],
   },
   {
-    title: __('Capturing leads'),
+    title: __('Capturing seeds'),
     opened: false,
     subArticles: [{ name: 'web-form', title: __('Web form') }],
   },
@@ -600,10 +607,10 @@ const articles = ref([
     ],
   },
   {
-    title: __('Frappe CRM mobile'),
+    title: __('BRG Manager mobile'),
     opened: false,
     subArticles: [
-      { name: 'mobile-app-installation', title: __('Mobile app installation') },
+      { name: 'mobile-app-installation', title: __('BRG Manager app installation') },
     ],
   },
 ])

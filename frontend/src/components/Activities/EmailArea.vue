@@ -75,7 +75,7 @@
       </div>
     </div>
     <div class="border-0 border-t mt-3 mb-1 border-outline-gray-modals" />
-    <EmailContent :content="activity.data.content" />
+    <div class="py-4 text-center text-ink-gray-5">HTML GOES HERE</div>
     <div v-if="activity.data?.attachments?.length" class="flex flex-wrap gap-2">
       <AttachmentItem
         v-for="a in activity.data.attachments"

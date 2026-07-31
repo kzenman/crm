@@ -3,6 +3,48 @@ import { userResource } from '@/stores/user'
 import { sessionStore } from '@/stores/session'
 import { viewsStore } from '@/stores/views'
 
+// let parsed = '';
+// let dmChannels = '';
+// let botChannel = '';
+let memberId = '';
+;
+const mbdDmDocname = getChannelNameByPartial("MBD AI BOT");
+memberId = mbdDmDocname;
+
+
+console.log("mbdDmMemberId:", mbdDmDocname);
+// console.log("memberId:", memberId, "target:", target);
+
+// console.log("router.js Member ID:", memberId, 'dmChannels', dmChannels, 'botChannel', botChannel, 'foundObjects', foundObjects);
+
+
+function getChannelNameByPartial(partial) {
+  const raw = localStorage.getItem("app-cache");
+  if (!raw) return null;
+
+  // parse (handles rare double-encoding)
+  let arr = JSON.parse(raw);
+  if (typeof arr === "string") arr = JSON.parse(arr);
+
+  const cache = Object.fromEntries(arr);
+  const msg = cache?.channel_list?.data?.message;
+  if (!msg) return null;
+
+  const dm = (msg.dm_channels || []).find(
+    ch => typeof ch.channel_name === "string" &&
+          ch.channel_name.toLowerCase().includes(partial.toLowerCase())
+  );
+
+  // optional: fall back to public/private channels too
+  const ch = dm || (msg.channels || []).find(
+    ch => typeof ch.channel_name === "string" &&
+          ch.channel_name.toLowerCase().includes(partial.toLowerCase())
+  );
+console.log("43 arr:", arr, "msg:", msg, 'dm', dm, 'ch', ch);
+  return ch?.name ?? null;
+}
+
+
 const routes = [
   {
     path: '/',
@@ -83,6 +125,21 @@ const routes = [
     path: '/call-logs/view/:viewType?',
     name: 'Call Logs',
     component: () => import('@/pages/CallLogs.vue'),
+  },
+  {
+    alias: '/reports',
+    path: '/reports/view/:viewType?',
+    name: 'Reports',
+    component: () => import('@/pages/Reports.vue'),
+  },
+  {
+    alias: '/raven',
+    path: '/raven',
+    name: 'Chat',
+    beforeEnter() {
+      window.location.replace('/raven/Rose'); // absolute, ignores /crm base
+    },
+    component: { render: () => null }, // empty component (never rendered)
   },
   {
     path: '/welcome',

@@ -2,11 +2,20 @@
   <div v-if="tasks.length">
     <div v-for="(task, i) in tasks" :key="task.name">
       <div
-        class="activity flex cursor-pointer gap-6 rounded p-2.5 duration-300 ease-in-out hover:bg-surface-gray-1"
-        @click="modalRef.showTask(task)"
+        class="activity flex gap-6 rounded p-2.5 duration-300 ease-in-out"
+        :class="task.completed ? 'opacity-60' : 'cursor-pointer hover:bg-surface-gray-1'"
+        @click="!task.completed && modalRef.showTask(task)"
       >
+        <div class="flex items-center" @click.stop>
+          <input
+            type="checkbox"
+            :checked="task.completed"
+            @change="toggleCompleted(task)"
+            class="h-4 w-4 rounded border-outline-gray-modals text-ink-blue-7 focus:ring-2 focus:ring-ink-blue-5 cursor-pointer"
+          />
+        </div>
         <div class="flex flex-1 flex-col gap-1.5 text-base truncate">
-          <div class="font-medium text-ink-gray-9 truncate">
+          <div class="font-medium text-ink-gray-9 truncate" :class="task.completed && 'line-through'">
             {{ task.title }}
           </div>
           <div class="flex gap-1.5 text-ink-gray-8">
@@ -99,13 +108,29 @@ import UserAvatar from '@/components/UserAvatar.vue'
 import { formatDate, taskStatusOptions } from '@/utils'
 import { usersStore } from '@/stores/users'
 import { globalStore } from '@/stores/global'
-import { Tooltip, Dropdown } from 'frappe-ui'
+import { Tooltip, Dropdown, call } from 'frappe-ui'
 
 const props = defineProps({
   tasks: Array,
   modalRef: Object,
+  activities: Object,
 })
 
 const { getUser } = usersStore()
 const { $dialog } = globalStore()
+
+function toggleCompleted(task) {
+  const newValue = task.completed ? 0 : 1
+  call('frappe.client.set_value', {
+    doctype: 'CRM Task',
+    name: task.name,
+    fieldname: 'completed',
+    value: newValue,
+  }).then(() => {
+    task.completed = newValue
+    if (props.activities) {
+      props.activities.reload()
+    }
+  })
+}
 </script>
