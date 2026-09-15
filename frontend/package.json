@@ -35,7 +35,8 @@
   "resolutions": {
     "dompurify": "3.4.0",
     "brace-expansion": "2.1.0",
-    "picomatch": "4.0.4"
+    "picomatch": "4.0.4",
+    "unplugin-icons": "22.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
