@@ -44,7 +44,8 @@
     "brace-expansion": "2.1.0",
     "picomatch": "4.0.4",
     "prosemirror-model": "1.25.9",
-    "prosemirror-view": "1.41.9"
+    "prosemirror-view": "1.41.9",
+    "unplugin-icons": "22.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
