@@ -58,7 +58,9 @@ def check_app_permission():
 	allowed_modules = []
 
 	if is_frappe_version("15"):
-		allowed_modules = frappe.config.get_modules_from_all_apps_for_user()
+		from frappe.config import get_modules_from_all_apps_for_user
+
+		allowed_modules = get_modules_from_all_apps_for_user()
 	elif is_frappe_version("16", above=True):
 		from frappe.utils.modules import get_modules_from_all_apps_for_user
 
