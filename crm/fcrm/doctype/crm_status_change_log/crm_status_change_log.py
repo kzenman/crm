@@ -45,6 +45,28 @@ def get_duration(from_date, to_date):
 def add_status_change_log(doc):
 	to_status_type = frappe.db.get_value("CRM Deal Status", doc.status, "type") if doc.status else None
 
+	if doc.is_new():
+		# A deal created directly at a non-default status (e.g. Convert to
+		# Deal's own Status picker, which can go straight to "Won") still
+		# needs a completed `to`-populated log row -- the dashboard's Funnel
+		# Conversion chart (get_deal_status_change_counts) sources every
+		# stage past "Leads" only from rows where `to` is set, so without
+		# this a deal that never had a *later* status change stays invisible
+		# in every funnel stage despite currently sitting at that status.
+		doc.append(
+			"status_change_log",
+			{
+				"from": doc.status,
+				"from_type": to_status_type or "",
+				"to": doc.status,
+				"to_type": to_status_type or "",
+				"from_date": datetime.now(),
+				"to_date": datetime.now(),
+				"log_owner": frappe.session.user,
+				"duration": 0,
+			},
+		)
+
 	if not doc.is_new():
 		previous_status = doc.get_doc_before_save().status if doc.get_doc_before_save() else None
 		previous_status_type = (

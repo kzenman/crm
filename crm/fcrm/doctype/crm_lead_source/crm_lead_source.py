@@ -15,6 +15,7 @@ class CRMLeadSource(Document):
 		from frappe.types import DF
 
 		details: DF.TextEditor | None
+		intake_forms: DF.Check
 		source_name: DF.Data
 	# end: auto-generated types
 

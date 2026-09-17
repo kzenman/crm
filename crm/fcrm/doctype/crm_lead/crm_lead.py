@@ -235,11 +235,14 @@ class CRMLead(Document):
 		return contact.name
 
 	def create_organization(self, existing_organization=None):
-		if not self.organization and not existing_organization:
+		# Falls back to the lead's name so leads for individuals (no business name)
+		# still get an organization - required for the deal and its ERPNext customer.
+		organization_name = self.organization or self.lead_name
+		if not organization_name and not existing_organization:
 			return
 
 		existing_organization = existing_organization or frappe.db.exists(
-			"CRM Organization", {"organization_name": self.organization}
+			"CRM Organization", {"organization_name": organization_name}
 		)
 		if existing_organization:
 			self.db_set("organization", existing_organization)
@@ -248,7 +251,7 @@ class CRMLead(Document):
 		organization = frappe.new_doc("CRM Organization")
 		organization.update(
 			{
-				"organization_name": self.organization,
+				"organization_name": organization_name,
 				"website": self.website,
 				"territory": self.territory,
 				"industry": self.industry,

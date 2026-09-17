@@ -83,6 +83,7 @@
   {
    "fieldname": "salutation",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Salutation",
    "options": "Salutation"
   },
@@ -104,6 +105,7 @@
   {
    "fieldname": "gender",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Gender",
    "options": "Gender"
   },
@@ -127,6 +129,7 @@
   {
    "fieldname": "website",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Website"
   },
   {
@@ -152,12 +155,14 @@
   {
    "fieldname": "no_of_employees",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "No. of Employees",
    "options": "1-10\n11-50\n51-200\n201-500\n501-1000\n1000+"
   },
   {
    "fieldname": "annual_revenue",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Annual Revenue"
   },
   {
@@ -169,12 +174,13 @@
   {
    "fieldname": "source",
    "fieldtype": "Link",
-   "label": "Source",
+   "label": "How Did You Hear About Us?",
    "options": "CRM Lead Source"
   },
   {
    "fieldname": "industry",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Industry",
    "options": "CRM Industry"
   },
@@ -195,6 +201,7 @@
   {
    "fieldname": "job_title",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Job Title"
   },
   {
@@ -206,6 +213,7 @@
   {
    "fieldname": "organization",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_standard_filter": 1,
    "label": "Organization"
   },
@@ -293,6 +301,7 @@
   {
    "fieldname": "territory",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Territory",
    "options": "CRM Territory"
   },
@@ -311,6 +320,7 @@
   {
    "fieldname": "products_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Products"
   },
   {
@@ -423,8 +433,8 @@
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-05 19:37:01.351606",
- "modified_by": "twoxim@gmail.com",
+ "modified": "2026-07-26 06:27:27.374106",
+ "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Lead",
  "naming_rule": "By \"Naming Series\" field",
