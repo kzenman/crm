@@ -296,6 +296,20 @@ def get_organization_address(organization: str | None = None):
 	}
 
 
+def get_default_customer_group():
+	customer_group = frappe.db.get_single_value("Selling Settings", "customer_group")
+	if customer_group and not frappe.db.get_value("Customer Group", customer_group, "is_group"):
+		return customer_group
+
+	# "Selling Settings" default is unset or points at a group node (e.g. the
+	# "All Customer Groups" root) - ERPNext customers must use a non-group leaf.
+	# Most CRM Deals here are individual customers, so prefer that group if it exists.
+	if frappe.db.exists("Customer Group", {"name": "Individual", "is_group": 0}):
+		return "Individual"
+
+	return frappe.db.get_value("Customer Group", {"is_group": 0}, "name")
+
+
 def create_customer_in_erpnext(doc, method):
 	erpnext_crm_settings = frappe.get_single("ERPNext CRM Settings")
 	if (
@@ -312,7 +326,7 @@ def create_customer_in_erpnext(doc, method):
 	address = get_organization_address(doc.organization)
 	customer_data = {
 		"customer_name": doc.organization,
-		"customer_group": "All Customer Groups",
+		"customer_group": get_default_customer_group(),
 		"customer_type": "Company",
 		"territory": doc.territory,
 		"default_currency": doc.currency,

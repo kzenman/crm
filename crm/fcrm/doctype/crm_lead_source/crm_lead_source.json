@@ -10,7 +10,8 @@
  "engine": "InnoDB",
  "field_order": [
   "source_name",
-  "details"
+  "details",
+  "intake_forms"
  ],
  "fields": [
   {
@@ -25,12 +26,20 @@
    "fieldname": "details",
    "fieldtype": "Text Editor",
    "label": "Details"
+  },
+  {
+   "default": "0",
+   "description": "When checked this shows on the intake estimate form. Both website widget & Curbside forms",
+   "fieldname": "intake_forms",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Intake Forms"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-05 13:05:26.007219",
+ "modified": "2026-07-26 06:52:18.781172",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Lead Source",

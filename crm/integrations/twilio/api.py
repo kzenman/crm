@@ -92,6 +92,22 @@ def twilio_incoming_call_handler(**kwargs):
 		call_log.save(ignore_permissions=True)
 		frappe.db.commit()
 
+		# Get the agent moving now rather than waiting for Twilio to finish
+		# establishing the media-stream websocket below -- that takes ~2s, and
+		# the agent used to spend all of it idle, then join the room and open
+		# its Realtime session on the caller's clock. Enqueued rather than
+		# called inline so the TwiML response is not held up by LiveKit
+		# round-trips, which would just move the delay instead of removing it.
+		# Safe to fail: realtime_bridge.py dispatches on its own if no
+		# dispatch exists by the time its websocket opens.
+		frappe.enqueue(
+			"vmator_fe.livekit_dispatch.predispatch_agent",
+			queue="short",
+			enqueue_after_commit=False,
+			call_sid=details.get("id"),
+			site=frappe.local.site,
+		)
+
 		resp = VoiceResponse()
 		connect = resp.connect()
 		# frappe.local.site is already correctly resolved from this request's
