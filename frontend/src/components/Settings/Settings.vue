@@ -8,6 +8,7 @@
     <template #body>
       <div class="flex h-[calc(100vh_-_8rem)] bg-surface-gray-1">
         <div
+          ref="sidebarContainer"
           class="flex flex-col m-1 rounded-l-lg w-56 shrink-0 bg-surface-gray-1 overflow-y-auto"
         >
           <template v-for="(tab, i) in tabs" :key="tab.label">
@@ -23,6 +24,7 @@
                 v-for="item in tab.items"
                 :key="item.label"
                 :label="__(item.label)"
+                :data-page="item.label"
                 :active="activeTab?.label == item.label"
                 class="w-full"
                 :class="
@@ -50,6 +52,7 @@
 import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
 import LucideNetwork from '~icons/lucide/network'
 import MonitorCogIcon from '~icons/lucide/monitor-cog'
+import LucideTextCursorInput from '~icons/lucide/text-cursor-input'
 import SlidersIcon from '@/components/Icons/SlidersIcon.vue'
 import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
@@ -70,6 +73,7 @@ import LeadSyncSourcePage from '@/components/Settings/LeadSyncing/LeadSyncSource
 import DefaultsSettings from '@/components/Settings/DefaultsSettings.vue'
 import BrandSettings from '@/components/Settings/BrandSettings.vue'
 import HomeActions from '@/components/Settings/HomeActions.vue'
+import FormsSettings from '@/components/Settings/Forms/FormsSettings.vue'
 import GeneralSettings from '@/components/Settings/GeneralSettings.vue'
 import DashboardSettings from '@/components/Settings/DashboardSettings.vue'
 import EmailTemplatePage from '@/components/Settings/EmailTemplate/EmailTemplatePage.vue'
@@ -84,7 +88,7 @@ import {
 } from '@/composables/settings'
 import { isWhatsappInstalled } from '@/composables/whatsapp'
 import { Dialog, Avatar, SidebarItem } from 'frappe-ui'
-import { ref, markRaw, computed, watch, h } from 'vue'
+import { ref, markRaw, computed, watch, h, nextTick } from 'vue'
 import AssignmentRulePage from './AssignmentRules/AssignmentRulePage.vue'
 import ShieldCheck from '~icons/lucide/shield-check'
 import SlaConfig from './Sla/SlaConfig.vue'
@@ -194,6 +198,11 @@ const tabs = computed(() => {
           icon: markRaw(h(ShieldCheck)),
           component: markRaw(SlaConfig),
         },
+        {
+          label: __('Forms'),
+          component: markRaw(FormsSettings),
+          icon: markRaw(LucideTextCursorInput),
+        },
       ],
       condition: () => isManager(),
     },
@@ -251,6 +260,7 @@ const tabs = computed(() => {
 })
 
 const activeTab = ref(tabs.value[0].items[0])
+const sidebarContainer = ref(null)
 
 function setActiveTab(tabName) {
   activeTab.value =
@@ -262,5 +272,19 @@ function setActiveTab(tabName) {
     tabs.value[0].items[0]
 }
 
-watch(activeSettingsPage, (activePage) => setActiveTab(activePage))
+// Scroll the settings sidebar so the active page is in view (e.g. when opened
+// deep-linked from onboarding, so the user sees where they landed).
+function scrollActiveIntoView() {
+  nextTick(() => {
+    const el = sidebarContainer.value?.querySelector(
+      `[data-page="${activeTab.value?.label}"]`,
+    )
+    el?.scrollIntoView({ block: 'nearest' })
+  })
+}
+
+watch(activeSettingsPage, (activePage) => {
+  setActiveTab(activePage)
+  scrollActiveIntoView()
+})
 </script>

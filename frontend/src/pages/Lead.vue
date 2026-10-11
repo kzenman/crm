@@ -34,11 +34,19 @@
           </Button>
         </template>
       </Dropdown>
-      <Button
-        :label="__('Convert to Deal')"
-        variant="solid"
-        @click="showConvertToDealModal = true"
-      />
+      <Tooltip
+        :disabled="!isLeadConversionDisabled"
+        :text="__('Cannot convert a lost lead to deal')"
+      >
+        <div class="inline-flex">
+          <Button
+            :label="__('Convert to Deal')"
+            variant="solid"
+            :disabled="isLeadConversionDisabled"
+            @click="showConvertToDealModal = true"
+          />
+        </div>
+      </Tooltip>
     </template>
   </LayoutHeader>
   <div v-if="doc.name" class="flex h-full overflow-hidden">
@@ -223,6 +231,7 @@
     v-model="showDeleteLinkedDocModal"
     :doctype="'CRM Lead'"
     :docname="leadId"
+    :title="doc.lead_name"
     name="Leads"
   />
   <LostReasonModal
@@ -289,6 +298,8 @@ import {
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useActiveTabManager } from '@/composables/useActiveTabManager'
+import { useUnsavedChangesWarning } from '@/composables/useUnsavedChangesWarning'
+import { useVisitedRecords } from '@/composables/useVisitedRecords'
 
 const { brand } = getSettings()
 const { $dialog, $socket, makeCall } = globalStore()
@@ -323,19 +334,27 @@ const {
 const canDelete = computed(() => permissions.data?.permissions?.delete || false)
 
 const doc = computed(() => document.doc || {})
+const isLeadConversionDisabled = computed(
+  () => doc.value.status && getLeadStatus(doc.value.status)?.type === 'Lost',
+)
+
+useUnsavedChangesWarning(() => document.isDirty)
+
+const { markVisited } = useVisitedRecords('CRM Lead')
 
 onMounted(async () => {
   if (document.doc) await triggerOnRender()
+  markVisited(props.leadId)
 })
 
 watch(error, (err) => {
   if (err) {
     errorTitle.value = __(
       err.exc_type == 'DoesNotExistError'
-        ? 'Document not found'
-        : 'Error occurred',
+        ? __('Document not found')
+        : __('Error occurred'),
     )
-    errorMessage.value = __(err.messages?.[0] || 'An error occurred')
+    errorMessage.value = __(err.messages?.[0] || __('An error occurred'))
   } else {
     errorTitle.value = ''
     errorMessage.value = ''
@@ -487,13 +506,12 @@ function updateField(name, value) {
 
   document.save.submit(null, {
     onSuccess: () => (reload.value = true),
-    onError: (err) => {
+    onError: () => {
       if (Array.isArray(name)) {
         name.forEach((field) => (doc.value[field] = oldValues[field]))
       } else {
         doc.value[name] = oldValues
       }
-      toast.error(err.messages?.[0] || __('Error updating field'))
     },
   })
 }

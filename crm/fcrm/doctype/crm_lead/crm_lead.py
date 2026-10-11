@@ -72,6 +72,12 @@ class CRMLead(Document):
 		website: DF.Data | None
 	# end: auto-generated types
 
+	def before_insert(self):
+		# apply CRM enrichment (source/contact) when created via a web form
+		from crm.api.form import enrich_form_submission
+
+		enrich_form_submission(self)
+
 	def before_validate(self):
 		self.set_sla()
 
@@ -256,6 +262,7 @@ class CRMLead(Document):
 				"territory": self.territory,
 				"industry": self.industry,
 				"annual_revenue": self.annual_revenue,
+				"no_of_employees": self.no_of_employees,
 			}
 		)
 		organization.insert(ignore_permissions=True)
@@ -503,6 +510,8 @@ def convert_to_deal(
 		frappe.throw(_("Not allowed to convert Lead to Deal"), frappe.PermissionError)
 
 	lead = frappe.get_cached_doc("CRM Lead", lead)
+	if frappe.get_cached_value("CRM Lead Status", lead.status, "type") == "Lost":
+		frappe.throw(_("Cannot convert a lead with status {0}").format(lead.status))
 	if frappe.db.exists("CRM Lead Status", "Qualified"):
 		lead.db_set("status", "Qualified")
 	lead.db_set("converted", 1)
